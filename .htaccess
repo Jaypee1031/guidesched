@@ -1,0 +1,18 @@
+# Basic security for XAMPP Windows
+# Disable directory browsing
+Options -Indexes
+
+# Protect sensitive files
+<FilesMatch "^\.(htaccess|htpasswd|log|json)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Protect configuration files
+<FilesMatch "^(config|database)\.php$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Set default character set
+AddDefaultCharset UTF-8

@@ -1,0 +1,30 @@
+# Sensitive files
+config/database.php
+*.log
+security.log
+error.log
+
+# Uploads directory (keep structure but not files)
+uploads/*
+!uploads/.gitkeep
+
+# Rate limit files
+rate_limit_*.json
+
+# XAMPP/Server files
+.htaccess.backup
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS files
+Thumbs.db
+Desktop.ini
+
+# Devin AI files
+.devin/
