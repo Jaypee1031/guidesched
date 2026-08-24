@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GuideSched — Guidance Counseling Appointment System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --violet-950: #2B1153;
+            --violet-700: #5B21B6;
+            --violet-600: #6D28D9;
+            --violet-500: #7C3AED;
+            --violet-100: #EDE6FB;
+            --violet-50: #F6F3FD;
+            --white: #FFFFFF;
+            --ink: #211B36;
+            --muted: #726C87;
+            --line: #E7E1F5;
+            --green: #1C9A5B;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Inter', sans-serif; background: var(--violet-50); color: var(--ink); line-height: 1.6; }
+        header { background: var(--white); border-bottom: 1px solid var(--line); padding: 18px 40px; display: flex; align-items: center; justify-content: space-between; }
+        .logo { display: flex; align-items: center; gap: 12px; font-family: 'Sora', sans-serif; font-weight: 700; font-size: 20px; color: var(--violet-950); text-decoration: none; }
+        .logo-mark { width: 38px; height: 38px; border-radius: 12px; background: var(--violet-600); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+        .nav-links { display: flex; gap: 16px; align-items: center; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 10px 20px; border-radius: 10px; font-weight: 700; font-size: 14px; text-decoration: none; transition: all 0.2s; }
+        .btn-primary { background: var(--violet-600); color: var(--white); }
+        .btn-primary:hover { background: var(--violet-700); }
+        .btn-outline { border: 1px solid var(--line); color: var(--violet-700); background: var(--white); }
+        .btn-outline:hover { background: var(--violet-50); }
+
+        .hero { max-width: 900px; margin: 60px auto 40px; text-align: center; padding: 0 20px; }
+        .badge { display: inline-block; background: var(--violet-100); color: var(--violet-700); font-weight: 700; font-size: 12px; padding: 6px 14px; border-radius: 20px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .hero h1 { font-family: 'Sora', sans-serif; font-size: 42px; font-weight: 700; color: var(--violet-950); margin-bottom: 16px; line-height: 1.2; }
+        .hero p { font-size: 18px; color: var(--muted); max-width: 650px; margin: 0 auto 32px; }
+
+        .cards-grid { max-width: 1000px; margin: 0 auto 60px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; padding: 0 20px; }
+        .card { background: var(--white); border-radius: 16px; border: 1px solid var(--line); padding: 28px; box-shadow: 0 4px 16px -6px rgba(43,17,83,0.08); }
+        .card h3 { font-family: 'Sora', sans-serif; font-size: 18px; color: var(--violet-950); margin-bottom: 10px; }
+        .card p { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+
+        .credentials-box { background: var(--violet-950); color: var(--white); border-radius: 16px; padding: 32px; max-width: 800px; margin: 0 auto 60px; }
+        .credentials-box h3 { font-family: 'Sora', sans-serif; font-size: 20px; margin-bottom: 16px; color: #fff; }
+        .creds-list { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; font-size: 14px; }
+        .cred-item { background: rgba(255,255,255,0.08); padding: 16px; border-radius: 12px; }
+        .cred-title { font-weight: 700; color: var(--violet-100); margin-bottom: 6px; }
+
+        footer { text-align: center; padding: 30px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); background: var(--white); }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="#" class="logo">
+        <div class="logo-mark">GS</div>
+        GuideSched
+    </a>
+    <div class="nav-links">
+        <a href="https://github.com/Jaypee1031/guidesched" class="btn btn-outline" target="_blank">GitHub Repository</a>
+        <a href="login.php" class="btn btn-primary">Login / Portal</a>
+    </div>
+</header>
+
+<main>
+    <section class="hero">
+        <div class="badge">QSU Guidance Office System</div>
+        <h1>Guidance Counseling Appointment & Scheduling System</h1>
+        <p>A modern, confidential scheduling platform for students and guidance counselors.</p>
+        <div style="display:flex; justify-content:center; gap:14px;">
+            <a href="login.php" class="btn btn-primary" style="padding: 14px 28px; font-size: 15px;">Launch Application</a>
+            <a href="https://github.com/Jaypee1031/guidesched/blob/main/database/guidesched_full.sql" class="btn btn-outline" style="padding: 14px 28px; font-size: 15px;" target="_blank">View Database SQL</a>
+        </div>
+    </section>
+
+    <section class="cards-grid">
+        <div class="card">
+            <h3>🎓 Student Portal</h3>
+            <p>Interactive time-slot booking grid, appointment tracking, notifications feed, and personal insights analytics.</p>
+            <a href="student/dashboard.php" class="btn btn-outline" style="width:100%;">Go to Student Portal</a>
+        </div>
+        <div class="card">
+            <h3>🏛️ Admin & Counselor Portal</h3>
+            <p>1-click appointment approvals, weekly schedule grid management, Chart.js analytics graphs, and CSV reports generation.</p>
+            <a href="admin/dashboard.php" class="btn btn-outline" style="width:100%;">Go to Admin Portal</a>
+        </div>
+        <div class="card">
+            <h3>📊 Analytics & Insights</h3>
+            <p>Comprehensive tracking of monthly appointment trends, common student concern distributions, and session completion metrics.</p>
+            <a href="admin/analytics.php" class="btn btn-outline" style="width:100%;">View Analytics</a>
+        </div>
+    </section>
+
+    <section class="credentials-box">
+        <h3>🔑 Default System Credentials</h3>
+        <div class="creds-list">
+            <div class="cred-item">
+                <div class="cred-title">Administrator Account</div>
+                <div>Email: <code>admin@guidesched.com</code></div>
+                <div>Password: <code>admin123</code></div>
+            </div>
+            <div class="cred-item">
+                <div class="cred-title">Counselor Account</div>
+                <div>Email: <code>maria.santos@guidesched.com</code></div>
+                <div>Password: <code>counselor123</code></div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer>
+    GuideSched — Developed for QSU Diffun Campus Guidance Services. Hosted on GitHub.
+</footer>
+
+</body>
+</html>
