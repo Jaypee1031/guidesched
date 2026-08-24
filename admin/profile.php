@@ -2,25 +2,12 @@
 require_once '../config/config.php';
 require_once '../includes/auth_functions.php';
 require_once '../includes/appointment_functions.php';
+require_once '../includes/admin_functions.php';
 
-requireRole('student');
+requireAnyRole(['admin', 'counselor']);
 
 $user = getUserProfile($_SESSION['user_id']);
-$stats = getStudentAppointmentStats($_SESSION['user_id']);
-$all_apts = getStudentAppointments($_SESSION['user_id']);
-
-$last_visit = 'None yet';
-foreach ($all_apts as $apt) {
-    if ($apt['status'] === 'completed') {
-        $last_visit = date('M j, Y', strtotime($apt['appointment_date']));
-        break;
-    }
-}
-
-$counselor_name = 'Ms. Grace Fontanilla';
-if (!empty($all_apts) && !empty($all_apts[0]['counselor_name'])) {
-    $counselor_name = $all_apts[0]['counselor_name'];
-}
+$stats = getAdminStatistics();
 
 $error = '';
 $success = '';
@@ -30,10 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $data = [
             'name' => sanitizeInput($_POST['name']),
             'email' => sanitizeInput($_POST['email']),
-            'student_number' => sanitizeInput($_POST['student_number']),
-            'course' => sanitizeInput($_POST['course']),
-            'year_level' => intval($_POST['year_level']),
-            'contact_number' => sanitizeInput($_POST['contact_number'])
+            'specialization' => sanitizeInput($_POST['specialization'] ?? 'Guidance Counselor'),
+            'contact_number' => sanitizeInput($_POST['contact_number'] ?? 'N/A')
         ];
         
         $result = updateUserProfile($_SESSION['user_id'], $data);
@@ -61,8 +46,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$unread_count = count(getStudentNotifications($_SESSION['user_id'], true));
-$page_title = 'My Profile — GuideSched';
+$unread_count = count(getAdminNotifications($_SESSION['user_id'], true));
+$page_title = 'My Profile — Admin Portal — GuideSched';
 $active_page = 'profile';
 $base_url_path = '../';
 ?>
@@ -76,21 +61,21 @@ $base_url_path = '../';
 <?php include '../includes/icons.php'; ?>
 
 <div class="app">
-  <?php include '../includes/student_sidebar.php'; ?>
+  <?php include '../includes/admin_sidebar.php'; ?>
 
   <div class="main">
     <!-- TOPBAR -->
     <div class="topbar">
       <div>
         <h1>My Profile</h1>
-        <div class="sub">Your personal information and credentials</div>
+        <div class="sub">Counselor information and schedule preferences</div>
       </div>
       <div class="topbar-right">
         <a href="notifications.php" class="bell-btn">
           <?php if ($unread_count > 0): ?><span class="bell-dot"></span><?php endif; ?>
           <span class="icon"><svg><use href="#i-bell"/></svg></span>
         </a>
-        <div class="avatar">
+        <div class="avatar" style="background:var(--violet-700);">
           <?php echo strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : '')); ?>
         </div>
       </div>
@@ -106,15 +91,15 @@ $base_url_path = '../';
       <?php endif; ?>
 
       <div class="grid cols-2">
-        <!-- LEFT: EDIT PROFILE FORM -->
+        <!-- LEFT: COUNSELOR DETAILS FORM -->
         <div class="card">
           <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
-            <div class="avatar" style="width:64px;height:64px;font-size:20px;">
+            <div class="avatar" style="width:64px;height:64px;font-size:20px;background:var(--violet-700);">
               <?php echo strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : '')); ?>
             </div>
             <div>
               <h3 style="font-size:17px;"><?php echo htmlspecialchars($user['name']); ?></h3>
-              <div class="sub" style="color:var(--muted);font-size:13px;">Student ID: <?php echo htmlspecialchars($user['student_number']); ?></div>
+              <div class="sub" style="color:var(--muted);font-size:13px;"><?php echo htmlspecialchars($user['specialization'] ?? 'Guidance Counselor'); ?> · Guidance Office</div>
             </div>
           </div>
 
@@ -126,30 +111,24 @@ $base_url_path = '../';
                 <input type="text" name="name" value="<?php echo htmlspecialchars($user['name']); ?>" required>
               </div>
               <div class="field">
-                <label>Student ID</label>
-                <input type="text" name="student_number" value="<?php echo htmlspecialchars($user['student_number']); ?>" required>
+                <label>Title / Specialization</label>
+                <input type="text" name="specialization" value="<?php echo htmlspecialchars($user['specialization'] ?? 'Guidance Counselor'); ?>" required>
               </div>
               <div class="field">
-                <label>Course / Program</label>
-                <input type="text" name="course" value="<?php echo htmlspecialchars($user['course']); ?>" required>
-              </div>
-              <div class="field">
-                <label>Year Level</label>
-                <select name="year_level" required>
-                  <option value="1" <?php echo $user['year_level'] == 1 ? 'selected' : ''; ?>>1st Year</option>
-                  <option value="2" <?php echo $user['year_level'] == 2 ? 'selected' : ''; ?>>2nd Year</option>
-                  <option value="3" <?php echo $user['year_level'] == 3 ? 'selected' : ''; ?>>3rd Year</option>
-                  <option value="4" <?php echo $user['year_level'] == 4 ? 'selected' : ''; ?>>4th Year</option>
-                  <option value="5" <?php echo $user['year_level'] == 5 ? 'selected' : ''; ?>>5th Year</option>
-                </select>
+                <label>Department</label>
+                <input type="text" value="Guidance Office — QSU Diffun Campus" disabled>
               </div>
               <div class="field">
                 <label>Email Address</label>
                 <input type="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>
               </div>
               <div class="field">
-                <label>Contact Number</label>
-                <input type="text" name="contact_number" value="<?php echo htmlspecialchars($user['contact_number']); ?>" required>
+                <label>Office Hours</label>
+                <input type="text" value="Mon–Fri, 8:00 AM – 5:00 PM" disabled>
+              </div>
+              <div class="field">
+                <label>Room Number</label>
+                <input type="text" value="Room 204" disabled>
               </div>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top:10px;">Save Profile Changes</button>
@@ -178,28 +157,28 @@ $base_url_path = '../';
           </form>
         </div>
 
-        <!-- RIGHT: SUMMARY & PRIVACY NOTE -->
+        <!-- RIGHT: WEEK'S OVERVIEW -->
         <div class="card">
-          <h3 style="margin-bottom:14px;">Appointment Summary</h3>
+          <h3 style="margin-bottom:14px;">This Week's Overview</h3>
           <div style="display:flex; flex-direction:column; gap:12px;">
             <div class="row-item" style="padding:0 0 12px;">
-              <div class="info"><div class="title">Total sessions</div></div>
-              <div style="margin-left:auto; font-family:'Sora'; font-weight:700; color:var(--violet-700);"><?php echo $stats['total']; ?></div>
+              <div class="info"><div class="title">Sessions completed</div></div>
+              <div style="margin-left:auto; font-family:'Sora'; font-weight:700; color:var(--violet-700);"><?php echo $stats['completed_sessions']; ?></div>
             </div>
             <div class="row-item" style="padding:0 0 12px;">
-              <div class="info"><div class="title">Last visit</div></div>
-              <div style="margin-left:auto; font-weight:700;"><?php echo $last_visit; ?></div>
+              <div class="info"><div class="title">Pending approvals</div></div>
+              <div style="margin-left:auto; font-weight:700;"><?php echo $stats['pending_requests']; ?></div>
             </div>
             <div class="row-item" style="padding:0; border-bottom:none;">
-              <div class="info"><div class="title">Assigned counselor</div></div>
-              <div style="margin-left:auto; font-weight:700;"><?php echo htmlspecialchars($counselor_name); ?></div>
+              <div class="info"><div class="title">Open slots remaining</div></div>
+              <div style="margin-left:auto; font-weight:700;">9</div>
             </div>
           </div>
 
           <div class="quote-card" style="margin-top:18px;">
             <p class="q" style="font-size:13px;">
               <span class="icon" style="display:inline-block;vertical-align:-4px;margin-right:6px;"><svg width="16" height="16"><use href="#i-shield"/></svg></span>
-              Your counseling records are kept confidential and are never shared without your consent.
+              Student records remain confidential and are visible only to assigned counselors.
             </p>
           </div>
         </div>

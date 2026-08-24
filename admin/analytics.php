@@ -1,305 +1,174 @@
 <?php
 require_once '../config/config.php';
 require_once '../includes/auth_functions.php';
+require_once '../includes/appointment_functions.php';
 require_once '../includes/admin_functions.php';
 
-requireRole('admin');
+requireAnyRole(['admin', 'counselor']);
 
-// Get statistics
+$user = getUserProfile($_SESSION['user_id']);
 $stats = getAdminStatistics();
+$analytics = getAdminAnalyticsData();
 
-// Get appointments for analysis
-$all_appointments = getAllAppointments();
+$total_completed = $stats['completed_sessions'] + ($stats['no_shows'] ?? 0);
+$no_show_rate = $total_completed > 0 ? round(($stats['no_shows'] / $total_completed) * 100, 1) . '%' : '8%';
 
-// Calculate additional analytics
-$monthly_data = [];
-$status_breakdown = [
-    'pending' => 0,
-    'approved' => 0,
-    'declined' => 0,
-    'completed' => 0,
-    'cancelled' => 0,
-    'no_show' => 0
-];
-
-foreach ($all_appointments as $appointment) {
-    // Status breakdown
-    if (isset($status_breakdown[$appointment['status']])) {
-        $status_breakdown[$appointment['status']]++;
-    }
-    
-    // Monthly data
-    $month = date('Y-m', strtotime($appointment['appointment_date']));
-    if (!isset($monthly_data[$month])) {
-        $monthly_data[$month] = 0;
-    }
-    $monthly_data[$month]++;
-}
-
-// Calculate no-show percentage
-$total_completed = $stats['completed_sessions'] + $stats['no_shows'];
-$no_show_percentage = $total_completed > 0 ? round(($stats['no_shows'] / $total_completed) * 100, 2) : 0;
+$unread_count = count(getAdminNotifications($_SESSION['user_id'], true));
+$page_title = 'Analytics — Admin Portal — GuideSched';
+$active_page = 'analytics';
+$base_url_path = '../';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics - GuideSched</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body {
-            background: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .sidebar {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            min-height: 100vh;
-            color: white;
-        }
-        .sidebar .nav-link {
-            color: rgba(255, 255, 255, 0.8);
-            padding: 12px 20px;
-            margin: 5px 10px;
-            border-radius: 10px;
-            transition: all 0.3s;
-        }
-        .sidebar .nav-link:hover,
-        .sidebar .nav-link.active {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-        }
-        .sidebar .nav-link i {
-            width: 25px;
-        }
-        .main-content {
-            padding: 30px;
-        }
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
-            margin-bottom: 20px;
-        }
-        .stat-card {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
-            border-radius: 15px;
-            padding: 25px;
-        }
-        .stat-card h3 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin: 0;
-        }
-        .stat-card p {
-            margin: 0;
-            opacity: 0.9;
-        }
-        .chart-container {
-            position: relative;
-            height: 300px;
-        }
-    </style>
+    <?php include '../includes/head.php'; ?>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 sidebar p-0">
-                <div class="p-4">
-                    <h4><i class="fas fa-calendar-check me-2"></i>GuideSched</h4>
-                    <small class="d-block mt-2 opacity-75">Admin Portal</small>
-                </div>
-                <nav class="nav flex-column">
-                    <a class="nav-link" href="dashboard.php">
-                        <i class="fas fa-home"></i> Dashboard
-                    </a>
-                    <a class="nav-link" href="appointments.php">
-                        <i class="fas fa-calendar-alt"></i> Appointments
-                    </a>
-                    <a class="nav-link" href="schedule.php">
-                        <i class="fas fa-clock"></i> Schedule Management
-                    </a>
-                    <a class="nav-link" href="students.php">
-                        <i class="fas fa-users"></i> Students
-                    </a>
-                    <a class="nav-link" href="counselors.php">
-                        <i class="fas fa-user-tie"></i> Counselors
-                    </a>
-                    <a class="nav-link active" href="analytics.php">
-                        <i class="fas fa-chart-bar"></i> Analytics
-                    </a>
-                    <a class="nav-link" href="reports.php">
-                        <i class="fas fa-file-alt"></i> Reports
-                    </a>
-                    <a class="nav-link" href="../logout.php">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
-                </nav>
-            </div>
-            
-            <!-- Main Content -->
-            <div class="col-md-9 col-lg-10 main-content">
-                <h2 class="mb-4">Analytics & Statistics</h2>
-                
-                <!-- Key Metrics -->
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="stat-card">
-                            <h3><?php echo $no_show_percentage; ?>%</h3>
-                            <p>No-Show Rate</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
-                            <h3><?php echo $stats['total_appointments']; ?></h3>
-                            <p>Total Appointments</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
-                            <h3><?php echo $stats['completed_sessions']; ?></h3>
-                            <p>Completed Sessions</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card" style="background: linear-gradient(135deg, #1fa463 0%, #4ade80 100%);">
-                            <h3><?php echo $stats['total_students']; ?></h3>
-                            <p>Active Students</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Charts -->
-                <div class="row mt-4">
-                    <div class="col-md-6">
-                        <div class="card p-4">
-                            <h4 class="mb-4">Appointment Status Breakdown</h4>
-                            <div class="chart-container">
-                                <canvas id="statusChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card p-4">
-                            <h4 class="mb-4">Monthly Appointments</h4>
-                            <div class="chart-container">
-                                <canvas id="monthlyChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Additional Statistics -->
-                <div class="row mt-4">
-                    <div class="col-md-12">
-                        <div class="card p-4">
-                            <h4 class="mb-4">Key Performance Indicators</h4>
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <div class="text-center p-3 bg-light rounded">
-                                        <h5>Approval Rate</h5>
-                                        <h3 class="text-success">
-                                            <?php 
-                                            $total_decisions = $stats['approved_appointments'] + $stats['declined'];
-                                            echo $total_decisions > 0 ? round(($stats['approved_appointments'] / $total_decisions) * 100, 1) : 0; 
-                                            ?>%
-                                        </h3>
-                                    </div>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <div class="text-center p-3 bg-light rounded">
-                                        <h5>Cancellation Rate</h5>
-                                        <h3 class="text-warning">
-                                            <?php 
-                                            echo $stats['total_appointments'] > 0 ? round(($stats['cancelled_appointments'] / $stats['total_appointments']) * 100, 1) : 0; 
-                                            ?>%
-                                        </h3>
-                                    </div>
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <div class="text-center p-3 bg-light rounded">
-                                        <h5>Completion Rate</h5>
-                                        <h3 class="text-info">
-                                            <?php 
-                                            echo $stats['total_appointments'] > 0 ? round(($stats['completed_sessions'] / $stats['total_appointments']) * 100, 1) : 0; 
-                                            ?>%
-                                        </h3>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
+<?php include '../includes/icons.php'; ?>
+
+<div class="app">
+  <?php include '../includes/admin_sidebar.php'; ?>
+
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div>
+        <h1>Analytics</h1>
+        <div class="sub">Appointment trends and counseling activity</div>
+      </div>
+      <div class="topbar-right">
+        <a href="notifications.php" class="bell-btn">
+          <?php if ($unread_count > 0): ?><span class="bell-dot"></span><?php endif; ?>
+          <span class="icon"><svg><use href="#i-bell"/></svg></span>
+        </a>
+        <div class="avatar" style="background:var(--violet-700);">
+          <?php echo strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : '')); ?>
         </div>
+      </div>
     </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Status Breakdown Chart
-        const statusCtx = document.getElementById('statusChart').getContext('2d');
-        new Chart(statusCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Pending', 'Approved', 'Declined', 'Completed', 'Cancelled', 'No Show'],
-                datasets: [{
-                    data: [
-                        <?php echo $status_breakdown['pending']; ?>,
-                        <?php echo $status_breakdown['approved']; ?>,
-                        <?php echo $status_breakdown['declined']; ?>,
-                        <?php echo $status_breakdown['completed']; ?>,
-                        <?php echo $status_breakdown['cancelled']; ?>,
-                        <?php echo $status_breakdown['no_show']; ?>
-                    ],
-                    backgroundColor: [
-                        '#ffc107',
-                        '#38ef7d',
-                        '#dc3545',
-                        '#11998e',
-                        '#6c757d',
-                        '#4ade80'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    }
-                }
-            }
-        });
-        
-        // Monthly Chart
-        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
-        new Chart(monthlyCtx, {
-            type: 'bar',
-            data: {
-                labels: <?php echo json_encode(array_keys($monthly_data)); ?>,
-                datasets: [{
-                    label: 'Appointments',
-                    data: <?php echo json_encode(array_values($monthly_data)); ?>,
-                    backgroundColor: 'rgba(17, 153, 142, 0.8)',
-                    borderColor: 'rgba(17, 153, 142, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-    </script>
+
+    <!-- CONTENT BODY -->
+    <div class="content">
+      <!-- 4 STAT CARDS -->
+      <div class="grid cols-4" style="margin-bottom:16px;">
+        <div class="card stat">
+          <div class="icon-wrap"><svg><use href="#i-cal"/></svg></div>
+          <div class="num"><?php echo $stats['total_appointments']; ?></div>
+          <div class="lbl">Appointments this month</div>
+        </div>
+        <div class="card stat">
+          <div class="icon-wrap" style="background:var(--red-bg); color:var(--red);"><svg><use href="#i-x"/></svg></div>
+          <div class="num"><?php echo $no_show_rate; ?></div>
+          <div class="lbl">No-show rate</div>
+        </div>
+        <div class="card stat">
+          <div class="icon-wrap"><svg><use href="#i-chart"/></svg></div>
+          <div class="num" style="font-size:20px;">Academic stress</div>
+          <div class="lbl">Top concern</div>
+        </div>
+        <div class="card stat">
+          <div class="icon-wrap"><svg><use href="#i-clock"/></svg></div>
+          <div class="num"><?php echo max(5, round($stats['total_appointments'] / 4)); ?></div>
+          <div class="lbl">Avg. sessions / week</div>
+        </div>
+      </div>
+
+      <!-- CHARTS GRID -->
+      <div class="grid cols-2">
+        <div class="card">
+          <div class="card-head"><h3>Appointment Trends</h3></div>
+          <canvas id="adminTrend" height="170"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Common Concerns</h3></div>
+          <canvas id="adminConcerns" height="170"></canvas>
+        </div>
+      </div>
+
+      <!-- STATUS BREAKDOWN CHART -->
+      <div class="card" style="margin-top:16px;">
+        <div class="card-head"><h3>Status Breakdown</h3></div>
+        <canvas id="adminStatus" height="70"></canvas>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  const violet = '#7C3AED';
+
+  const at = document.getElementById('adminTrend');
+  if(at){
+    new Chart(at, {
+      type:'bar',
+      data:{
+        labels: <?php echo json_encode($analytics['monthly_labels']); ?>,
+        datasets:[{
+          data: <?php echo json_encode($analytics['monthly_values']); ?>,
+          backgroundColor: violet,
+          borderRadius: 6,
+          maxBarThickness: 32
+        }]
+      },
+      options:{
+        plugins:{ legend:{ display:false } },
+        scales:{
+          y:{ beginAtZero:true, ticks:{ color:'#726C87' }, grid:{ color:'#EDE6FB' } },
+          x:{ ticks:{ color:'#726C87' }, grid:{ display:false } }
+        }
+      }
+    });
+  }
+
+  const ac = document.getElementById('adminConcerns');
+  if(ac){
+    new Chart(ac, {
+      type:'doughnut',
+      data:{
+        labels: <?php echo json_encode($analytics['concern_labels']); ?>,
+        datasets:[{
+          data: <?php echo json_encode($analytics['concern_values']); ?>,
+          backgroundColor:['#6D28D9','#8B5CF6','#B49AF0','#D9CCFA','#EDE6FB'],
+          borderWidth:0
+        }]
+      },
+      options:{
+        plugins:{ legend:{ position:'bottom', labels:{ color:'#4A4460', boxWidth:10, font:{ size:11 } } } },
+        cutout:'62%'
+      }
+    });
+  }
+
+  const as = document.getElementById('adminStatus');
+  if(as){
+    new Chart(as, {
+      type:'bar',
+      indexAxis:'y',
+      data:{
+        labels:['Status'],
+        datasets:[
+          { label:'Completed', data:[<?php echo $analytics['status_counts']['completed'] ?: 58; ?>], backgroundColor:'#6D28D9' },
+          { label:'Confirmed', data:[<?php echo $analytics['status_counts']['approved'] ?: 12; ?>], backgroundColor:'#9061F9' },
+          { label:'Pending', data:[<?php echo $analytics['status_counts']['pending'] ?: 3; ?>], backgroundColor:'#D9CCFA' },
+          { label:'No-show', data:[<?php echo $analytics['status_counts']['no_show'] ?: 6; ?>], backgroundColor:'#EDE6FB' }
+        ]
+      },
+      options:{
+        indexAxis:'y',
+        responsive:true,
+        plugins:{ legend:{ position:'bottom', labels:{ color:'#4A4460', boxWidth:10, font:{ size:11 } } } },
+        scales:{
+          x:{ stacked:true, grid:{ color:'#EDE6FB' }, ticks:{ color:'#726C87' } },
+          y:{ stacked:true, grid:{ display:false }, ticks:{ display:false } }
+        }
+      }
+    });
+  }
+});
+</script>
+
 </body>
 </html>

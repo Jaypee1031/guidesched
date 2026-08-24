@@ -1,10 +1,12 @@
 <?php
 require_once '../config/config.php';
 require_once '../includes/auth_functions.php';
+require_once '../includes/appointment_functions.php';
 require_once '../includes/admin_functions.php';
 
 requireAnyRole(['admin', 'counselor']);
 
+$user = getUserProfile($_SESSION['user_id']);
 $error = '';
 $success = '';
 
@@ -15,32 +17,16 @@ if (isset($_GET['action']) && isset($_GET['id']) && is_numeric($_GET['id'])) {
     
     if ($action === 'approve') {
         $result = updateAppointmentStatus($appointment_id, 'approved', $_SESSION['user_id']);
-        if ($result['success']) {
-            $success = $result['message'];
-        } else {
-            $error = $result['message'];
-        }
+        if ($result['success']) { $success = $result['message']; } else { $error = $result['message']; }
     } elseif ($action === 'decline') {
         $result = updateAppointmentStatus($appointment_id, 'declined', $_SESSION['user_id']);
-        if ($result['success']) {
-            $success = $result['message'];
-        } else {
-            $error = $result['message'];
-        }
+        if ($result['success']) { $success = $result['message']; } else { $error = $result['message']; }
     } elseif ($action === 'complete') {
         $result = updateAppointmentStatus($appointment_id, 'completed', $_SESSION['user_id']);
-        if ($result['success']) {
-            $success = $result['message'];
-        } else {
-            $error = $result['message'];
-        }
+        if ($result['success']) { $success = $result['message']; } else { $error = $result['message']; }
     } elseif ($action === 'noshow') {
         $result = updateAppointmentStatus($appointment_id, 'no_show', $_SESSION['user_id']);
-        if ($result['success']) {
-            $success = $result['message'];
-        } else {
-            $error = $result['message'];
-        }
+        if ($result['success']) { $success = $result['message']; } else { $error = $result['message']; }
     }
 }
 
@@ -48,325 +34,187 @@ if (isset($_GET['action']) && isset($_GET['id']) && is_numeric($_GET['id'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_notes'])) {
     $appointment_id = intval($_POST['appointment_id']);
     $admin_notes = sanitizeInput($_POST['admin_notes']);
+    $current_status = sanitizeInput($_POST['current_status']);
     
-    $result = updateAppointmentStatus($appointment_id, $_POST['current_status'], $_SESSION['user_id'], $admin_notes);
-    if ($result['success']) {
-        $success = $result['message'];
-    } else {
-        $error = $result['message'];
-    }
+    $result = updateAppointmentStatus($appointment_id, $current_status, $_SESSION['user_id'], $admin_notes);
+    if ($result['success']) { $success = $result['message']; } else { $error = $result['message']; }
 }
 
-// Get filters
-$status_filter = isset($_GET['status']) ? sanitizeInput($_GET['status']) : '';
-$counselor_filter = isset($_GET['counselor']) && is_numeric($_GET['counselor']) ? intval($_GET['counselor']) : null;
-$date_from = isset($_GET['date_from']) ? sanitizeInput($_GET['date_from']) : '';
-$date_to = isset($_GET['date_to']) ? sanitizeInput($_GET['date_to']) : '';
+$pending_appointments = getAllAppointments('pending');
+$approved_appointments = getAllAppointments('approved');
+$all_appointments = getAllAppointments();
 
-// Get appointments
-$appointments = getAllAppointments($status_filter, $counselor_filter, $date_from, $date_to);
+$active_tab = isset($_GET['tab']) ? sanitizeInput($_GET['tab']) : 'pending';
 
-// Get counselors for filter
-$counselors = getAvailableCounselors();
-$user = getUserProfile($_SESSION['user_id']);
+$unread_count = count(getAdminNotifications($_SESSION['user_id'], true));
+$page_title = 'Appointments — Admin Portal — GuideSched';
+$active_page = 'appointments';
+$base_url_path = '../';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Appointment Management - GuideSched</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            background: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .sidebar {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            min-height: 100vh;
-            color: white;
-        }
-        .sidebar .nav-link {
-            color: rgba(255, 255, 255, 0.8);
-            padding: 12px 20px;
-            margin: 5px 10px;
-            border-radius: 10px;
-            transition: all 0.3s;
-        }
-        .sidebar .nav-link:hover,
-        .sidebar .nav-link.active {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-        }
-        .sidebar .nav-link i {
-            width: 25px;
-        }
-        .main-content {
-            padding: 30px;
-        }
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
-            margin-bottom: 20px;
-        }
-        .table {
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        .table thead {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
-        }
-        .badge-pending {
-            background: #ffc107;
-            color: #000;
-        }
-        .badge-approved {
-            background: #28a745;
-        }
-        .badge-declined {
-            background: #dc3545;
-        }
-        .badge-completed {
-            background: #17a2b8;
-        }
-        .badge-cancelled {
-            background: #6c757d;
-        }
-        .badge-rescheduled {
-            background: #fd7e14;
-        }
-        .badge-no_show {
-            background: #6f42c1;
-        }
-        .filter-section {
-            background: #f0fff4;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        .action-btn {
-            padding: 5px 10px;
-            font-size: 0.8rem;
-            border-radius: 5px;
-        }
-    </style>
+    <?php include '../includes/head.php'; ?>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 sidebar p-0">
-                <div class="p-4">
-                    <h4><i class="fas fa-calendar-check me-2"></i>GuideSched</h4>
-                    <small class="d-block mt-2 opacity-75"><?php echo ucfirst($user['role']); ?> Portal</small>
-                </div>
-                <nav class="nav flex-column">
-                    <a class="nav-link" href="dashboard.php">
-                        <i class="fas fa-home"></i> Dashboard
-                    </a>
-                    <a class="nav-link active" href="appointments.php">
-                        <i class="fas fa-calendar-alt"></i> Appointments
-                    </a>
-                    <a class="nav-link" href="schedule.php">
-                        <i class="fas fa-clock"></i> Schedule Management
-                    </a>
-                    <a class="nav-link" href="students.php">
-                        <i class="fas fa-users"></i> Students
-                    </a>
-                    <?php if ($user['role'] === 'admin'): ?>
-                    <a class="nav-link" href="counselors.php">
-                        <i class="fas fa-user-tie"></i> Counselors
-                    </a>
-                    <a class="nav-link" href="analytics.php">
-                        <i class="fas fa-chart-bar"></i> Analytics
-                    </a>
-                    <a class="nav-link" href="reports.php">
-                        <i class="fas fa-file-alt"></i> Reports
-                    </a>
-                    <?php endif; ?>
-                    <a class="nav-link" href="../logout.php">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
-                </nav>
-            </div>
-            
-            <!-- Main Content -->
-            <div class="col-md-9 col-lg-10 main-content">
-                <div class="card p-4">
-                    <h2 class="mb-4">Appointment Management</h2>
-                    
-                    <?php if ($error): ?>
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <?php echo $error; ?>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    <?php endif; ?>
-                    
-                    <?php if ($success): ?>
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <?php echo $success; ?>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    <?php endif; ?>
-                    
-                    <!-- Filter Section -->
-                    <div class="filter-section">
-                        <form method="GET" action="">
-                            <div class="row">
-                                <div class="col-md-3 mb-3">
-                                    <label for="status" class="form-label">Status</label>
-                                    <select class="form-select" id="status" name="status">
-                                        <option value="">All Status</option>
-                                        <option value="pending" <?php echo $status_filter === 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                        <option value="approved" <?php echo $status_filter === 'approved' ? 'selected' : ''; ?>>Approved</option>
-                                        <option value="declined" <?php echo $status_filter === 'declined' ? 'selected' : ''; ?>>Declined</option>
-                                        <option value="completed" <?php echo $status_filter === 'completed' ? 'selected' : ''; ?>>Completed</option>
-                                        <option value="cancelled" <?php echo $status_filter === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
-                                        <option value="no_show" <?php echo $status_filter === 'no_show' ? 'selected' : ''; ?>>No Show</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label for="counselor" class="form-label">Counselor</label>
-                                    <select class="form-select" id="counselor" name="counselor">
-                                        <option value="">All Counselors</option>
-                                        <?php foreach ($counselors as $counselor): ?>
-                                        <option value="<?php echo $counselor['id']; ?>" <?php echo $counselor_filter == $counselor['id'] ? 'selected' : ''; ?>>
-                                            <?php echo htmlspecialchars($counselor['name']); ?>
-                                        </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="col-md-2 mb-3">
-                                    <label for="date_from" class="form-label">From Date</label>
-                                    <input type="date" class="form-control" id="date_from" name="date_from" value="<?php echo $date_from; ?>">
-                                </div>
-                                <div class="col-md-2 mb-3">
-                                    <label for="date_to" class="form-label">To Date</label>
-                                    <input type="date" class="form-control" id="date_to" name="date_to" value="<?php echo $date_to; ?>">
-                                </div>
-                                <div class="col-md-2 mb-3 d-flex align-items-end">
-                                    <button type="submit" class="btn btn-primary w-100">Filter</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    
-                    <?php if (empty($appointments)): ?>
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            No appointments found matching the selected criteria.
-                        </div>
-                    <?php else: ?>
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Date</th>
-                                        <th>Time</th>
-                                        <th>Student</th>
-                                        <th>Counselor</th>
-                                        <th>Concern</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($appointments as $appointment): ?>
-                                    <tr>
-                                        <td><?php echo formatDate($appointment['appointment_date']); ?></td>
-                                        <td><?php echo formatTime($appointment['start_time']); ?></td>
-                                        <td><?php echo htmlspecialchars($appointment['student_name']); ?></td>
-                                        <td><?php echo htmlspecialchars($appointment['counselor_name']); ?></td>
-                                        <td><?php echo htmlspecialchars(substr($appointment['concern'], 0, 30)) . '...'; ?></td>
-                                        <td>
-                                            <span class="badge badge-<?php echo $appointment['status']; ?>">
-                                                <?php echo ucfirst(str_replace('_', ' ', $appointment['status'])); ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <div class="btn-group">
-                                                <?php if ($appointment['status'] === 'pending'): ?>
-                                                    <a href="appointments.php?action=approve&id=<?php echo $appointment['id']; ?>" class="btn btn-sm btn-success action-btn">
-                                                        <i class="fas fa-check"></i>
-                                                    </a>
-                                                    <a href="appointments.php?action=decline&id=<?php echo $appointment['id']; ?>" class="btn btn-sm btn-danger action-btn">
-                                                        <i class="fas fa-times"></i>
-                                                    </a>
-                                                <?php endif; ?>
-                                                
-                                                <?php if ($appointment['status'] === 'approved'): ?>
-                                                    <a href="appointments.php?action=complete&id=<?php echo $appointment['id']; ?>" class="btn btn-sm btn-info action-btn">
-                                                        <i class="fas fa-check-double"></i>
-                                                    </a>
-                                                    <a href="appointments.php?action=noshow&id=<?php echo $appointment['id']; ?>" class="btn btn-sm btn-warning action-btn">
-                                                        <i class="fas fa-user-slash"></i>
-                                                    </a>
-                                                <?php endif; ?>
-                                                
-                                                <button type="button" class="btn btn-sm btn-secondary action-btn" data-bs-toggle="modal" data-bs-target="#notesModal<?php echo $appointment['id']; ?>">
-                                                    <i class="fas fa-sticky-note"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    
-                                    <!-- Notes Modal -->
-                                    <div class="modal fade" id="notesModal<?php echo $appointment['id']; ?>" tabindex="-1">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Appointment Notes</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <form method="POST" action="">
-                                                    <div class="modal-body">
-                                                        <input type="hidden" name="update_notes" value="1">
-                                                        <input type="hidden" name="appointment_id" value="<?php echo $appointment['id']; ?>">
-                                                        <input type="hidden" name="current_status" value="<?php echo $appointment['status']; ?>">
-                                                        
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Date & Time</label>
-                                                            <p class="form-control-plaintext"><?php echo formatDate($appointment['appointment_date']) . ' at ' . formatTime($appointment['start_time']); ?></p>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Student</label>
-                                                            <p class="form-control-plaintext"><?php echo htmlspecialchars($appointment['student_name']); ?></p>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Concern</label>
-                                                            <p class="form-control-plaintext"><?php echo htmlspecialchars($appointment['concern']); ?></p>
-                                                        </div>
-                                                        <div class="mb-3">
-                                                            <label for="admin_notes" class="form-label">Admin Notes</label>
-                                                            <textarea class="form-control" id="admin_notes" name="admin_notes" rows="4"><?php echo htmlspecialchars($appointment['admin_notes'] ?? ''); ?></textarea>
-                                                        </div>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                        <button type="submit" class="btn btn-primary">Save Notes</button>
-                                                    </div>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        <div class="mt-3">
-                            <p class="text-muted">Showing <?php echo count($appointments); ?> appointment(s)</p>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
+
+<?php include '../includes/icons.php'; ?>
+
+<div class="app">
+  <?php include '../includes/admin_sidebar.php'; ?>
+
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div>
+        <h1>Appointments</h1>
+        <div class="sub">Approve, reschedule, and manage counselor availability</div>
+      </div>
+      <div class="topbar-right">
+        <a href="schedule.php" class="btn btn-primary">
+          <span class="icon"><svg><use href="#i-plus"/></svg></span>Block Time Slot
+        </a>
+        <a href="notifications.php" class="bell-btn">
+          <?php if ($unread_count > 0): ?><span class="bell-dot"></span><?php endif; ?>
+          <span class="icon"><svg><use href="#i-bell"/></svg></span>
+        </a>
+        <div class="avatar" style="background:var(--violet-700);">
+          <?php echo strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : '')); ?>
         </div>
+      </div>
     </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- CONTENT BODY -->
+    <div class="content">
+      <?php if ($error): ?>
+        <div class="alert-box alert-danger"><?php echo htmlspecialchars($error); ?></div>
+      <?php endif; ?>
+      <?php if ($success): ?>
+        <div class="alert-box alert-success"><?php echo htmlspecialchars($success); ?></div>
+      <?php endif; ?>
+
+      <!-- TABBAR -->
+      <div class="tabbar">
+        <button class="<?php echo $active_tab === 'pending' ? 'active' : ''; ?>" onclick="showTab(this, 'ad-pending')">Pending (<?php echo count($pending_appointments); ?>)</button>
+        <button class="<?php echo $active_tab === 'approved' ? 'active' : ''; ?>" onclick="showTab(this, 'ad-approved')">Approved (<?php echo count($approved_appointments); ?>)</button>
+        <button class="<?php echo $active_tab === 'slots' ? 'active' : ''; ?>" onclick="showTab(this, 'ad-slots')">Time Slots</button>
+      </div>
+
+      <!-- PENDING TAB -->
+      <div id="ad-pending" class="tabpane" style="display: <?php echo $active_tab === 'pending' ? 'block' : 'none'; ?>;">
+        <div class="card">
+          <?php if (empty($pending_appointments)): ?>
+            <div class="empty-note">No pending appointment requests.</div>
+          <?php else: ?>
+            <table>
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Requested Date & Time</th>
+                  <th>Concern</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach ($pending_appointments as $apt): ?>
+                  <tr>
+                    <td>
+                      <div class="name-cell">
+                        <div class="avatar"><?php echo strtoupper(substr($apt['student_name'], 0, 2)); ?></div>
+                        <?php echo htmlspecialchars($apt['student_name']); ?>
+                      </div>
+                    </td>
+                    <td><?php echo date('M j, Y', strtotime($apt['appointment_date'])) . ' at ' . date('g:i A', strtotime($apt['start_time'])); ?></td>
+                    <td><span class="tag"><?php echo htmlspecialchars(substr($apt['concern'], 0, 35)); ?></span></td>
+                    <td><span class="pill pending">Pending</span></td>
+                    <td>
+                      <div class="actions" style="margin-left:0; gap:6px;">
+                        <a href="appointments.php?action=approve&id=<?php echo $apt['id']; ?>" class="btn btn-approve btn-sm">Approve</a>
+                        <a href="appointments.php?action=decline&id=<?php echo $apt['id']; ?>" class="btn btn-decline btn-sm" onclick="return confirm('Decline this request?');">Decline</a>
+                      </div>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          <?php endif; ?>
+        </div>
+      </div>
+
+      <!-- APPROVED TAB -->
+      <div id="ad-approved" class="tabpane" style="display: <?php echo $active_tab === 'approved' ? 'block' : 'none'; ?>;">
+        <div class="card">
+          <?php if (empty($approved_appointments)): ?>
+            <div class="empty-note">No approved appointments found.</div>
+          <?php else: ?>
+            <table>
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Date & Time</th>
+                  <th>Concern</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php foreach ($approved_appointments as $apt): ?>
+                  <tr>
+                    <td>
+                      <div class="name-cell">
+                        <div class="avatar"><?php echo strtoupper(substr($apt['student_name'], 0, 2)); ?></div>
+                        <?php echo htmlspecialchars($apt['student_name']); ?>
+                      </div>
+                    </td>
+                    <td><?php echo date('M j, Y', strtotime($apt['appointment_date'])) . ' at ' . date('g:i A', strtotime($apt['start_time'])); ?></td>
+                    <td><span class="tag"><?php echo htmlspecialchars(substr($apt['concern'], 0, 35)); ?></span></td>
+                    <td><span class="pill confirmed">Confirmed</span></td>
+                    <td>
+                      <div class="actions" style="margin-left:0; gap:6px;">
+                        <a href="appointments.php?action=complete&id=<?php echo $apt['id']; ?>" class="btn btn-ghost btn-sm" style="color:var(--green);">Mark Complete</a>
+                        <a href="appointments.php?action=noshow&id=<?php echo $apt['id']; ?>" class="btn btn-ghost btn-sm" style="color:var(--amber);" onclick="return confirm('Mark as No-show?');">No-show</a>
+                      </div>
+                    </td>
+                  </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+          <?php endif; ?>
+        </div>
+      </div>
+
+      <!-- TIME SLOTS TAB -->
+      <div id="ad-slots" class="tabpane" style="display: <?php echo $active_tab === 'slots' ? 'block' : 'none'; ?>;">
+        <div class="card">
+          <div class="card-head">
+            <h3>Weekly Availability Grid</h3>
+            <a href="schedule.php" class="btn btn-ghost btn-sm">
+              <span class="icon"><svg><use href="#i-edit"/></svg></span>Edit Availability
+            </a>
+          </div>
+          <div class="week-grid">
+            <div class="h"></div><div class="h">Mon</div><div class="h">Tue</div><div class="h">Wed</div><div class="h">Thu</div><div class="h">Fri</div><div class="h">Sat</div>
+            <div class="time-lbl">9 AM</div><div class="cell booked">Booked</div><div class="cell avail">Open</div><div class="cell avail">Open</div><div class="cell booked">Booked</div><div class="cell avail">Open</div><div class="cell blocked">—</div>
+            <div class="time-lbl">10 AM</div><div class="cell booked">Booked</div><div class="cell booked">Booked</div><div class="cell avail">Open</div><div class="cell avail">Open</div><div class="cell avail">Open</div><div class="cell blocked">—</div>
+            <div class="time-lbl">1 PM</div><div class="cell avail">Open</div><div class="cell avail">Open</div><div class="cell blocked">—</div><div class="cell booked">Booked</div><div class="cell avail">Open</div><div class="cell blocked">—</div>
+            <div class="time-lbl">2 PM</div><div class="cell avail">Open</div><div class="cell blocked">—</div><div class="cell avail">Open</div><div class="cell avail">Open</div><div class="cell blocked">—</div><div class="cell blocked">—</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+function showTab(btn, paneId){
+  const bar = btn.parentElement;
+  bar.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tabpane').forEach(p => p.style.display = (p.id === paneId ? 'block' : 'none'));
+}
+</script>
+
 </body>
 </html>

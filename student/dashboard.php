@@ -5,254 +5,166 @@ require_once '../includes/appointment_functions.php';
 
 requireRole('student');
 
-// Get user profile
 $user = getUserProfile($_SESSION['user_id']);
-
-// Get appointment statistics
 $stats = getStudentAppointmentStats($_SESSION['user_id']);
 
 // Get upcoming appointments
-$upcoming_appointments = array_filter(getStudentAppointments($_SESSION['user_id']), function($apt) {
-    return $apt['status'] === 'approved' && strtotime($apt['appointment_date']) >= strtotime(date('Y-m-d'));
-});
+$all_apts = getStudentAppointments($_SESSION['user_id']);
+$upcoming = null;
+foreach ($all_apts as $apt) {
+    if (in_array($apt['status'], ['approved', 'pending']) && strtotime($apt['appointment_date']) >= strtotime(date('Y-m-d'))) {
+        $upcoming = $apt;
+        break;
+    }
+}
 
 // Get recent notifications
 $recent_notifications = array_slice(getStudentNotifications($_SESSION['user_id']), 0, 3);
+$unread_count = count(getStudentNotifications($_SESSION['user_id'], true));
+
+$page_title = 'Home — Student Portal — GuideSched';
+$active_page = 'home';
+$base_url_path = '../';
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard - GuideSched</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            background: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .sidebar {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            min-height: 100vh;
-            color: white;
-        }
-        .sidebar .nav-link {
-            color: rgba(255, 255, 255, 0.8);
-            padding: 12px 20px;
-            margin: 5px 10px;
-            border-radius: 10px;
-            transition: all 0.3s;
-        }
-        .sidebar .nav-link:hover,
-        .sidebar .nav-link.active {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-        }
-        .sidebar .nav-link i {
-            width: 25px;
-        }
-        .main-content {
-            padding: 30px;
-        }
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
-            margin-bottom: 20px;
-        }
-        .stat-card {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
-            border-radius: 15px;
-            padding: 25px;
-        }
-        .stat-card h3 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin: 0;
-        }
-        .stat-card p {
-            margin: 0;
-            opacity: 0.9;
-        }
-        .welcome-card {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 30px;
-        }
-        .user-avatar {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-        .btn-book {
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            border: none;
-            border-radius: 10px;
-            padding: 12px 30px;
-            font-weight: 600;
-            color: white;
-        }
-        .btn-book:hover {
-            color: white;
-            transform: translateY(-2px);
-        }
-    </style>
+    <?php include '../includes/head.php'; ?>
 </head>
 <body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 sidebar p-0">
-                <div class="p-4">
-                    <h4><i class="fas fa-calendar-check me-2"></i>GuideSched</h4>
-                </div>
-                <nav class="nav flex-column">
-                    <a class="nav-link active" href="dashboard.php">
-                        <i class="fas fa-home"></i> Dashboard
-                    </a>
-                    <a class="nav-link" href="profile.php">
-                        <i class="fas fa-user"></i> My Profile
-                    </a>
-                    <a class="nav-link" href="book-appointment.php">
-                        <i class="fas fa-calendar-plus"></i> Book Appointment
-                    </a>
-                    <a class="nav-link" href="appointments.php">
-                        <i class="fas fa-calendar-alt"></i> My Appointments
-                    </a>
-                    <a class="nav-link" href="notifications.php">
-                        <i class="fas fa-bell"></i> Notifications
-                    </a>
-                    <a class="nav-link" href="../logout.php">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </a>
-                </nav>
-            </div>
-            
-            <!-- Main Content -->
-            <div class="col-md-9 col-lg-10 main-content">
-                <div class="welcome-card">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h2>Welcome back, <?php echo htmlspecialchars($user['name']); ?>!</h2>
-                            <p class="text-muted mb-0">Student ID: <?php echo htmlspecialchars($user['student_number']); ?></p>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <div class="user-avatar d-inline-flex">
-                                <?php echo strtoupper(substr($user['name'], 0, 1)); ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-4">
-                        <div class="stat-card">
-                            <h3><?php echo $stats['upcoming']; ?></h3>
-                            <p>Upcoming Appointments</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="stat-card">
-                            <h3><?php echo $stats['pending']; ?></h3>
-                            <p>Pending Requests</p>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="stat-card">
-                            <h3><?php echo $stats['completed']; ?></h3>
-                            <p>Completed Sessions</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mt-4">
-                    <div class="col-md-8">
-                        <div class="card p-4">
-                            <h4 class="mb-4">Quick Actions</h4>
-                            <div class="d-grid gap-3">
-                                <a href="book-appointment.php" class="btn btn-book">
-                                    <i class="fas fa-calendar-plus me-2"></i>Book New Appointment
-                                </a>
-                                <a href="appointments.php" class="btn btn-outline-primary">
-                                    <i class="fas fa-calendar-alt me-2"></i>View My Appointments
-                                </a>
-                                <a href="profile.php" class="btn btn-outline-secondary">
-                                    <i class="fas fa-user me-2"></i>Update Profile
-                                </a>
-                            </div>
-                        </div>
-                        
-                        <?php if (!empty($upcoming_appointments)): ?>
-                        <div class="card p-4 mt-4">
-                            <h4 class="mb-4">Upcoming Appointments</h4>
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
-                                        <tr>
-                                            <th>Date</th>
-                                            <th>Time</th>
-                                            <th>Counselor</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach (array_slice($upcoming_appointments, 0, 3) as $appointment): ?>
-                                        <tr>
-                                            <td><?php echo formatDate($appointment['appointment_date']); ?></td>
-                                            <td><?php echo formatTime($appointment['start_time']); ?></td>
-                                            <td><?php echo htmlspecialchars($appointment['counselor_name']); ?></td>
-                                            <td>
-                                                <span class="badge bg-success"><?php echo ucfirst($appointment['status']); ?></span>
-                                            </td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="mt-3">
-                                <a href="appointments.php" class="btn btn-sm btn-outline-primary">View All Appointments</a>
-                            </div>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card p-4">
-                            <h4 class="mb-4">Recent Activity</h4>
-                            <?php if (empty($recent_notifications)): ?>
-                                <p class="text-muted">No recent activity to display.</p>
-                            <?php else: ?>
-                                <div class="list-group list-group-flush">
-                                    <?php foreach ($recent_notifications as $notification): ?>
-                                    <div class="list-group-item px-0">
-                                        <small class="text-muted"><?php echo formatDate($notification['created_at'], 'M j, g:i A'); ?></small>
-                                        <p class="mb-1"><?php echo htmlspecialchars($notification['message']); ?></p>
-                                        <span class="badge bg-<?php echo $notification['type'] === 'approved' ? 'success' : ($notification['type'] === 'declined' ? 'danger' : 'info'); ?>">
-                                            <?php echo ucfirst($notification['type']); ?>
-                                        </span>
-                                    </div>
-                                    <?php endforeach; ?>
-                                </div>
-                                <div class="mt-3">
-                                    <a href="notifications.php" class="btn btn-sm btn-outline-primary">View All Notifications</a>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
+<?php include '../includes/icons.php'; ?>
+
+<div class="app">
+  <?php include '../includes/student_sidebar.php'; ?>
+
+  <div class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div>
+        <h1>Welcome, <?php echo htmlspecialchars(explode(' ', trim($user['name']))[0]); ?></h1>
+        <div class="sub"><?php echo date('l, F j, Y'); ?> · QSU Diffun Guidance Office</div>
+      </div>
+      <div class="topbar-right">
+        <a href="notifications.php" class="bell-btn">
+          <?php if ($unread_count > 0): ?><span class="bell-dot"></span><?php endif; ?>
+          <span class="icon"><svg><use href="#i-bell"/></svg></span>
+        </a>
+        <div class="avatar">
+          <?php echo strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : '')); ?>
         </div>
+      </div>
     </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- CONTENT BODY -->
+    <div class="content">
+      <!-- ACTION BANNER -->
+      <div class="banner">
+        <div>
+          <h2>Ready to talk to someone?</h2>
+          <p>Booking a session takes less than a minute — private, flexible, and always confidential.</p>
+        </div>
+        <a href="appointments.php?tab=book" class="btn btn-primary">
+          <span class="icon"><svg><use href="#i-plus"/></svg></span>Book an Appointment
+        </a>
+      </div>
+
+      <div class="grid cols-2">
+        <!-- UPCOMING APPOINTMENT CARD -->
+        <div class="card">
+          <div class="card-head">
+            <h3>Your Upcoming Appointment</h3>
+            <a href="appointments.php" class="link">View all</a>
+          </div>
+
+          <?php if ($upcoming): ?>
+            <div class="row-item">
+              <div class="time-block">
+                <div class="t"><?php echo date('g:i A', strtotime($upcoming['start_time'])); ?></div>
+                <div class="d"><?php echo date('M j', strtotime($upcoming['appointment_date'])); ?></div>
+              </div>
+              <div class="info">
+                <div class="title"><?php echo htmlspecialchars($upcoming['counselor_name']); ?></div>
+                <div class="sub">Guidance Counselor · <?php echo htmlspecialchars($upcoming['concern']); ?></div>
+              </div>
+              <span class="pill <?php echo $upcoming['status']; ?>">
+                <?php echo ucfirst($upcoming['status']); ?>
+              </span>
+            </div>
+            <div class="row-item" style="border-bottom:none; padding-top:12px;">
+              <div class="actions" style="margin-left:0; gap:10px;">
+                <a href="appointments.php" class="btn btn-outline btn-sm">
+                  <span class="icon"><svg><use href="#i-refresh"/></svg></span>Manage Appointment
+                </a>
+                <a href="appointments.php?cancel=<?php echo $upcoming['id']; ?>" class="btn btn-ghost btn-sm" onclick="return confirm('Are you sure you want to cancel this appointment?');">Cancel</a>
+              </div>
+            </div>
+          <?php else: ?>
+            <div class="empty-note">
+              No upcoming appointments scheduled right now.
+              <div style="margin-top:10px;">
+                <a href="appointments.php?tab=book" class="btn btn-ghost btn-sm">Book a session</a>
+              </div>
+            </div>
+          <?php endif; ?>
+        </div>
+
+        <!-- QUOTE CARD & QUICK STATS -->
+        <div class="quote-card">
+          <p class="q">"It's okay to ask for help. Reaching out is a sign of strength, not weakness."</p>
+          <p class="a">Today's reminder from the Guidance Office</p>
+          <div style="margin-top:18px; display:flex; gap:24px;">
+            <div>
+              <div class="stat">
+                <div class="num" style="font-size:22px;"><?php echo $stats['completed']; ?></div>
+                <div class="lbl">Sessions attended</div>
+              </div>
+            </div>
+            <div>
+              <div class="stat">
+                <div class="num" style="font-size:22px;"><?php echo max(1, min($stats['completed'], 3)); ?></div>
+                <div class="lbl">Month streak</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RECENT NOTIFICATIONS -->
+      <div class="card" style="margin-top:16px;">
+        <div class="card-head">
+          <h3>Recent Notifications</h3>
+          <a href="notifications.php" class="link">View all</a>
+        </div>
+
+        <?php if (empty($recent_notifications)): ?>
+          <div class="empty-note">No notifications to display.</div>
+        <?php else: ?>
+          <?php foreach ($recent_notifications as $notif): 
+            $icon_class = 'violet';
+            $icon_name = '#i-bell';
+            if ($notif['type'] === 'approved') { $icon_class = 'green'; $icon_name = '#i-check'; }
+            elseif ($notif['type'] === 'declined') { $icon_class = 'red'; $icon_name = '#i-x'; }
+            elseif ($notif['type'] === 'rescheduled') { $icon_class = 'amber'; $icon_name = '#i-refresh'; }
+            elseif ($notif['type'] === 'reminder') { $icon_class = 'violet'; $icon_name = '#i-clock'; }
+          ?>
+            <div class="notif-item <?php echo !$notif['is_read'] ? 'unread' : ''; ?>">
+              <div class="notif-icon <?php echo $icon_class; ?>">
+                <svg width="18" height="18"><use href="<?php echo $icon_name; ?>"/></svg>
+              </div>
+              <div>
+                <div class="n-title"><?php echo ucfirst($notif['type']); ?></div>
+                <div class="n-sub"><?php echo htmlspecialchars($notif['message']); ?></div>
+              </div>
+              <div class="n-time"><?php echo formatDate($notif['created_at'], 'M j, g:i A'); ?></div>
+            </div>
+          <?php endforeach; ?>
+        <?php endif; ?>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

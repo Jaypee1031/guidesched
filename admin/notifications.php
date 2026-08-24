@@ -2,31 +2,30 @@
 require_once '../config/config.php';
 require_once '../includes/auth_functions.php';
 require_once '../includes/appointment_functions.php';
+require_once '../includes/admin_functions.php';
 
-requireRole('student');
+requireAnyRole(['admin', 'counselor']);
 
 $user = getUserProfile($_SESSION['user_id']);
 
-// Handle mark read
 if (isset($_GET['mark_read']) && is_numeric($_GET['mark_read'])) {
     markNotificationAsRead(intval($_GET['mark_read']), $_SESSION['user_id']);
-    redirect('student/notifications.php');
+    redirect('admin/notifications.php');
 }
 
-// Handle mark all read
 if (isset($_GET['mark_all_read'])) {
-    $unread = getStudentNotifications($_SESSION['user_id'], true);
+    $unread = getAdminNotifications($_SESSION['user_id'], true);
     foreach ($unread as $n) {
         markNotificationAsRead($n['id'], $_SESSION['user_id']);
     }
-    redirect('student/notifications.php');
+    redirect('admin/notifications.php');
 }
 
-$all_notifications = getStudentNotifications($_SESSION['user_id']);
-$unread_notifications = getStudentNotifications($_SESSION['user_id'], true);
+$all_notifications = getAdminNotifications($_SESSION['user_id']);
+$unread_notifications = getAdminNotifications($_SESSION['user_id'], true);
 $unread_count = count($unread_notifications);
 
-$page_title = 'Notifications — GuideSched';
+$page_title = 'Notifications — Admin Portal — GuideSched';
 $active_page = 'notifications';
 $base_url_path = '../';
 ?>
@@ -40,20 +39,20 @@ $base_url_path = '../';
 <?php include '../includes/icons.php'; ?>
 
 <div class="app">
-  <?php include '../includes/student_sidebar.php'; ?>
+  <?php include '../includes/admin_sidebar.php'; ?>
 
   <div class="main">
     <!-- TOPBAR -->
     <div class="topbar">
       <div>
         <h1>Notifications</h1>
-        <div class="sub">Updates about your guidance appointments</div>
+        <div class="sub">Booking activity and system alerts</div>
       </div>
       <div class="topbar-right">
         <?php if ($unread_count > 0): ?>
           <a href="notifications.php?mark_all_read=1" class="btn btn-outline btn-sm">Mark all read</a>
         <?php endif; ?>
-        <div class="avatar">
+        <div class="avatar" style="background:var(--violet-700);">
           <?php echo strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : '')); ?>
         </div>
       </div>
@@ -63,7 +62,7 @@ $base_url_path = '../';
     <div class="content">
       <div class="card">
         <?php if (empty($all_notifications)): ?>
-          <div class="empty-note">No notifications found.</div>
+          <div class="empty-note">No admin notifications found.</div>
         <?php else: ?>
           <?php foreach ($all_notifications as $notif): 
             $icon_class = 'violet';

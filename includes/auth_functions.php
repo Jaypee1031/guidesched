@@ -1,10 +1,8 @@
 <?php
 // Authentication Functions
 
-// Include security functions (will be loaded by config.php)
-if (file_exists(__DIR__ . '/security_functions.php')) {
-    require_once __DIR__ . '/security_functions.php';
-}
+// Include security functions unconditionally
+require_once __DIR__ . '/security_functions.php';
 
 // User login
 function loginUser($email, $password) {

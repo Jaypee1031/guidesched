@@ -213,6 +213,11 @@ function detectXSS($input) {
     return false;
 }
 
+// Helper function to verify password
+function verifyPassword($password, $hash) {
+    return password_verify($password, $hash);
+}
+
 // Secure input validation
 function secureInputValidation($input, $type = 'general') {
     // Check for common attack patterns

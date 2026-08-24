@@ -92,11 +92,6 @@ function hashPassword($password) {
     return password_hash($password, PASSWORD_DEFAULT);
 }
 
-// Helper function to verify password
-function verifyPassword($password, $hash) {
-    return password_verify($password, $hash);
-}
-
 // Helper function to generate user ID
 function generateUserId($prefix, $length = 6) {
     return $prefix . str_pad(rand(0, pow(10, $length) - 1), $length, '0', STR_PAD_LEFT);
