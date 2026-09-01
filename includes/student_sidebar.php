@@ -38,6 +38,9 @@ if (isset($user) && !empty($user['course'])) {
   <a class="navlink <?php echo $active_page === 'analytics' ? 'active' : ''; ?>" href="analytics.php">
     <span class="icon"><svg><use href="#i-chart"/></svg></span>My Insights
   </a>
+  <a class="navlink" href="javascript:void(0)" onclick="triggerPWAInstall()" style="color:var(--violet-600); font-weight:700;">
+    <span class="icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>Download App
+  </a>
 
   <div class="sidebar-foot">
     <a class="mini-profile <?php echo $active_page === 'profile' ? 'active' : ''; ?>" href="profile.php">
