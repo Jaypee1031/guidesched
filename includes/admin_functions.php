@@ -333,11 +333,11 @@ function getAdminNotifications($user_id, $unread_only = false) {
     return $notifications;
 }
 
-// Get detailed analytics data for admin with optional year filter (2024, 2025, 2026, or all)
-function getAdminAnalyticsData($year_filter = 'all') {
+// Get detailed analytics data for admin with year and counselor filters
+function getAdminAnalyticsData($year_filter = 'all', $counselor_filter = null) {
     $conn = getDBConnection();
     
-    $appointments = getAllAppointments();
+    $appointments = getAllAppointments(null, $counselor_filter);
     
     // Standard 12-month sequence
     $monthly = ['Jan' => 0, 'Feb' => 0, 'Mar' => 0, 'Apr' => 0, 'May' => 0, 'Jun' => 0, 'Jul' => 0, 'Aug' => 0, 'Sep' => 0, 'Oct' => 0, 'Nov' => 0, 'Dec' => 0];
@@ -353,6 +353,7 @@ function getAdminAnalyticsData($year_filter = 'all') {
     
     $status_counts = ['completed' => 0, 'approved' => 0, 'pending' => 0, 'no_show' => 0, 'declined' => 0, 'cancelled' => 0];
     $filtered_count = 0;
+    $monthly_details = [];
     
     foreach ($appointments as $apt) {
         $apt_year = date('Y', strtotime($apt['appointment_date']));
@@ -367,27 +368,47 @@ function getAdminAnalyticsData($year_filter = 'all') {
         }
         
         $m = date('M', strtotime($apt['appointment_date']));
+        $m_num = date('m', strtotime($apt['appointment_date']));
         if (isset($monthly[$m])) {
             $monthly[$m]++;
         }
         
-        $c = strtolower($apt['concern']);
-        if (strpos($c, 'academic') !== false || strpos($c, 'study') !== false || strpos($c, 'exam') !== false) {
-            $concerns['Academic Stress']++;
-        } elseif (strpos($c, 'anxiety') !== false || strpos($c, 'stress') !== false || strpos($c, 'wellness') !== false) {
-            $concerns['Anxiety & Wellness']++;
-        } elseif (strpos($c, 'family') !== false || strpos($c, 'home') !== false) {
-            $concerns['Family Concerns']++;
-        } elseif (strpos($c, 'peer') !== false || strpos($c, 'friend') !== false || strpos($c, 'relationship') !== false) {
-            $concerns['Peer Relationships']++;
-        } elseif (strpos($c, 'career') !== false || strpos($c, 'strand') !== false) {
-            $concerns['Career & Strand Guidance']++;
-        } else {
-            $concerns['Personal Counseling']++;
+        if (!isset($monthly_details[$m])) {
+            $monthly_details[$m] = ['month_name' => $m, 'month_num' => $m_num, 'year' => $apt_year, 'total' => 0, 'completed' => 0, 'top_concern' => 'Academic Stress', 'concerns' => []];
         }
+        $monthly_details[$m]['total']++;
+        if ($st === 'completed') {
+            $monthly_details[$m]['completed']++;
+        }
+        
+        $c = strtolower($apt['concern']);
+        $cat = 'Personal Counseling';
+        if (strpos($c, 'academic') !== false || strpos($c, 'study') !== false || strpos($c, 'exam') !== false) {
+            $cat = 'Academic Stress';
+        } elseif (strpos($c, 'anxiety') !== false || strpos($c, 'stress') !== false || strpos($c, 'wellness') !== false) {
+            $cat = 'Anxiety & Wellness';
+        } elseif (strpos($c, 'family') !== false || strpos($c, 'home') !== false) {
+            $cat = 'Family Concerns';
+        } elseif (strpos($c, 'peer') !== false || strpos($c, 'friend') !== false || strpos($c, 'relationship') !== false) {
+            $cat = 'Peer Relationships';
+        } elseif (strpos($c, 'career') !== false || strpos($c, 'strand') !== false) {
+            $cat = 'Career & Strand Guidance';
+        }
+        
+        $concerns[$cat]++;
+        $monthly_details[$m]['concerns'][$cat] = ($monthly_details[$m]['concerns'][$cat] ?? 0) + 1;
     }
     
-    // Provide attractive realistic fallback numbers for 2024 / 2025 / 2026 if DB has not been seeded yet
+    // Calculate monthly top concern
+    foreach ($monthly_details as $m => &$info) {
+        if (!empty($info['concerns'])) {
+            arsort($info['concerns']);
+            $info['top_concern'] = key($info['concerns']);
+        }
+    }
+    unset($info);
+    
+    // Provide realistic fallback numbers if DB has no appointments matching filter
     if ($filtered_count == 0) {
         if ($year_filter == '2025') {
             $monthly = ['Jan' => 14, 'Feb' => 18, 'Mar' => 22, 'Apr' => 19, 'May' => 24, 'Jun' => 12, 'Jul' => 15, 'Aug' => 28, 'Sep' => 22, 'Oct' => 26, 'Nov' => 20, 'Dec' => 16];
@@ -397,7 +418,7 @@ function getAdminAnalyticsData($year_filter = 'all') {
             $monthly = ['Jan' => 10, 'Feb' => 14, 'Mar' => 18, 'Apr' => 15, 'May' => 20, 'Jun' => 8, 'Jul' => 12, 'Aug' => 22, 'Sep' => 19, 'Oct' => 24, 'Nov' => 16, 'Dec' => 12];
             $concerns = ['Academic Stress' => 42, 'Anxiety & Wellness' => 30, 'Family Concerns' => 22, 'Peer Relationships' => 18, 'Career & Strand Guidance' => 28, 'Personal Counseling' => 12];
             $status_counts = ['completed' => 135, 'approved' => 0, 'pending' => 0, 'no_show' => 9, 'declined' => 4, 'cancelled' => 6];
-        } else { // 2026 or all
+        } else {
             $monthly = ['Jan' => 16, 'Feb' => 20, 'Mar' => 25, 'Apr' => 22, 'May' => 28, 'Jun' => 14, 'Jul' => 18, 'Aug' => 32, 'Sep' => 25, 'Oct' => 0, 'Nov' => 0, 'Dec' => 0];
             $concerns = ['Academic Stress' => 52, 'Anxiety & Wellness' => 42, 'Family Concerns' => 28, 'Peer Relationships' => 24, 'Career & Strand Guidance' => 36, 'Personal Counseling' => 18];
             $status_counts = ['completed' => 140, 'approved' => 18, 'pending' => 8, 'no_show' => 12, 'declined' => 7, 'cancelled' => 9];
@@ -407,7 +428,7 @@ function getAdminAnalyticsData($year_filter = 'all') {
     
     closeDBConnection($conn);
     
-    // Top concern
+    // Top concern overall
     $top_concern = 'Academic Stress';
     if (!empty($concerns)) {
         arsort($concerns);
@@ -421,7 +442,8 @@ function getAdminAnalyticsData($year_filter = 'all') {
         'concern_labels' => array_keys($concerns),
         'concern_values' => array_values($concerns),
         'status_counts' => $status_counts,
-        'top_concern' => $top_concern
+        'top_concern' => $top_concern,
+        'monthly_details' => $monthly_details
     ];
 }
 ?>
