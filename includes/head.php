@@ -11,5 +11,10 @@ if (!isset($page_title)) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="<?php echo $baseUrl; ?>assets/js/chart.umd.min.js"></script>
+<script>
+if (typeof Chart === 'undefined') {
+  document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"><\/script>');
+}
+</script>
 <link rel="stylesheet" href="<?php echo $baseUrl; ?>assets/css/style.css">

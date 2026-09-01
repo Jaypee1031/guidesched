@@ -70,7 +70,7 @@ $base_url_path = '../';
       <div class="topbar-right">
         <a href="notifications.php" class="bell-btn">
           <?php if ($unread_count > 0): ?><span class="bell-dot"></span><?php endif; ?>
-          <span class="icon"><svg><use href="#i-bell"/></svg></span>
+          <span class="icon"><svg width="18" height="18"><use href="#i-bell"/></svg></span>
         </a>
         <a href="profile.php" class="topbar-user-badge" title="Click to view My Profile">
           <div class="avatar" style="background:var(--violet-700);"><?php echo $user_initials; ?></div>
@@ -94,22 +94,30 @@ $base_url_path = '../';
       <!-- 4 CLICKABLE STAT CARDS -->
       <div class="grid cols-4" style="margin-bottom:16px;">
         <div class="card stat clickable" onclick="location.href='appointments.php?tab=approved'" title="Click to view confirmed appointments">
-          <div class="icon-wrap"><svg><use href="#i-cal"/></svg></div>
+          <div class="icon-wrap" style="background:var(--violet-100); color:var(--violet-700);">
+            <svg width="20" height="20" style="stroke:currentColor; fill:none;"><use href="#i-cal"/></svg>
+          </div>
           <div class="num"><?php echo count($today_schedule); ?></div>
           <div class="lbl">Today's Appointments ➜</div>
         </div>
         <div class="card stat clickable" onclick="location.href='appointments.php?tab=pending'" title="Click to review pending requests">
-          <div class="icon-wrap" style="background:var(--amber-bg); color:var(--amber);"><svg><use href="#i-alert"/></svg></div>
+          <div class="icon-wrap" style="background:var(--amber-bg); color:var(--amber);">
+            <svg width="20" height="20" style="stroke:currentColor; fill:none;"><use href="#i-alert"/></svg>
+          </div>
           <div class="num"><?php echo count($pending_requests); ?></div>
           <div class="lbl">Pending Approvals ➜</div>
         </div>
         <div class="card stat clickable" onclick="location.href='reports.php'" title="Click to view reports">
-          <div class="icon-wrap"><svg><use href="#i-chart"/></svg></div>
+          <div class="icon-wrap" style="background:var(--violet-100); color:var(--violet-700);">
+            <svg width="20" height="20" style="stroke:currentColor; fill:none;"><use href="#i-chart"/></svg>
+          </div>
           <div class="num"><?php echo $stats['approved_appointments'] + $stats['completed_sessions']; ?></div>
           <div class="lbl">This Week's Sessions ➜</div>
         </div>
         <div class="card stat clickable" onclick="location.href='reports.php?status=no_show'" title="Click to view no-show details">
-          <div class="icon-wrap" style="background:var(--red-bg); color:var(--red);"><svg><use href="#i-x"/></svg></div>
+          <div class="icon-wrap" style="background:var(--red-bg); color:var(--red);">
+            <svg width="20" height="20" style="stroke:currentColor; fill:none;"><use href="#i-x"/></svg>
+          </div>
           <div class="num"><?php echo $no_show_rate; ?></div>
           <div class="lbl">No-show Rate ➜</div>
         </div>
@@ -156,10 +164,10 @@ $base_url_path = '../';
                 </div>
                 <div class="actions">
                   <a href="dashboard.php?action=approve&id=<?php echo $apt['id']; ?>" class="btn btn-approve btn-sm btn-icon" title="Approve">
-                    <svg width="15" height="15"><use href="#i-check"/></svg>
+                    <svg width="15" height="15" style="stroke:currentColor; fill:none;"><use href="#i-check"/></svg>
                   </a>
                   <a href="dashboard.php?action=decline&id=<?php echo $apt['id']; ?>" class="btn btn-decline btn-sm btn-icon" title="Decline" onclick="return confirm('Decline this request?');">
-                    <svg width="15" height="15"><use href="#i-x"/></svg>
+                    <svg width="15" height="15" style="stroke:currentColor; fill:none;"><use href="#i-x"/></svg>
                   </a>
                 </div>
               </div>

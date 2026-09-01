@@ -37,7 +37,7 @@ $base_url_path = '../';
       <div class="topbar-right">
         <a href="notifications.php" class="bell-btn">
           <?php if ($unread_count > 0): ?><span class="bell-dot"></span><?php endif; ?>
-          <span class="icon"><svg><use href="#i-bell"/></svg></span>
+          <span class="icon"><svg width="18" height="18"><use href="#i-bell"/></svg></span>
         </a>
         <a href="profile.php" class="topbar-user-badge" title="Click to view My Profile">
           <div class="avatar"><?php echo $user_initials; ?></div>
@@ -53,17 +53,23 @@ $base_url_path = '../';
     <div class="content">
       <div class="grid cols-3" style="margin-bottom:16px;">
         <div class="card stat clickable" onclick="location.href='appointments.php?tab=past'" title="Click to view past sessions">
-          <div class="icon-wrap"><svg><use href="#i-heart"/></svg></div>
+          <div class="icon-wrap" style="background:var(--violet-100); color:var(--violet-700);">
+            <svg width="20" height="20" style="stroke:currentColor; fill:none;"><use href="#i-heart"/></svg>
+          </div>
           <div class="num"><?php echo $analytics['attended_count']; ?></div>
           <div class="lbl">Sessions attended ➜</div>
         </div>
         <div class="card stat clickable" onclick="location.href='appointments.php?tab=book'" title="Click to book new session">
-          <div class="icon-wrap"><svg><use href="#i-chart"/></svg></div>
+          <div class="icon-wrap" style="background:var(--violet-100); color:var(--violet-700);">
+            <svg width="20" height="20" style="stroke:currentColor; fill:none;"><use href="#i-chart"/></svg>
+          </div>
           <div class="num" style="font-size:20px;"><?php echo htmlspecialchars($analytics['top_concern']); ?></div>
           <div class="lbl">Most discussed topic ➜</div>
         </div>
         <div class="card stat clickable" onclick="location.href='appointments.php'" title="Click to view all appointments">
-          <div class="icon-wrap"><svg><use href="#i-shield"/></svg></div>
+          <div class="icon-wrap" style="background:var(--violet-100); color:var(--violet-700);">
+            <svg width="20" height="20" style="stroke:currentColor; fill:none;"><use href="#i-shield"/></svg>
+          </div>
           <div class="num" style="font-size:20px;"><?php echo $analytics['streak']; ?></div>
           <div class="lbl">Consistency streak ➜</div>
         </div>
@@ -83,6 +89,11 @@ $base_url_path = '../';
 
 <script>
 document.addEventListener('DOMContentLoaded', function(){
+  if (typeof Chart === 'undefined') {
+    console.error('Chart.js library is not loaded');
+    return;
+  }
+
   const sc = document.getElementById('studentChart');
   if(sc){
     new Chart(sc, {
@@ -90,6 +101,7 @@ document.addEventListener('DOMContentLoaded', function(){
       data: {
         labels: <?php echo json_encode($analytics['monthly_labels']); ?>,
         datasets: [{
+          label: 'Sessions',
           data: <?php echo json_encode($analytics['monthly_values']); ?>,
           backgroundColor: '#7C3AED',
           borderRadius: 6,
@@ -97,6 +109,7 @@ document.addEventListener('DOMContentLoaded', function(){
         }]
       },
       options: {
+        responsive: true,
         plugins: { legend: { display: false } },
         scales: {
           y: { beginAtZero: true, ticks: { stepSize: 1, color: '#726C87' }, grid: { color: '#EDE6FB' } },
