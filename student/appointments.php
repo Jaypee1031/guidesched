@@ -57,10 +57,12 @@ foreach ($all_appointments as $apt) {
 }
 
 $counselors = getAvailableCounselors();
-$active_tab = isset($_GET['tab']) ? sanitizeInput($_GET['tab']) : 'upcoming';
+$active_tab = isset($_GET['tab']) ? sanitizeInput($_GET['tab']) : (isset($active_tab) ? $active_tab : 'upcoming');
 
 $unread_count = count(getStudentNotifications($_SESSION['user_id'], true));
-$page_title = 'Appointments — GuideSched';
+$user_initials = strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : ''));
+
+$page_title = 'Appointments — GuideSched — Cagasat High School';
 $active_page = 'appointments';
 $base_url_path = '../';
 ?>
@@ -88,9 +90,13 @@ $base_url_path = '../';
           <?php if ($unread_count > 0): ?><span class="bell-dot"></span><?php endif; ?>
           <span class="icon"><svg><use href="#i-bell"/></svg></span>
         </a>
-        <div class="avatar">
-          <?php echo strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : '')); ?>
-        </div>
+        <a href="profile.php" class="topbar-user-badge" title="Click to view My Profile">
+          <div class="avatar"><?php echo $user_initials; ?></div>
+          <div class="user-meta">
+            <span class="user-name"><?php echo htmlspecialchars($user['name']); ?></span>
+            <span class="user-role"><?php echo htmlspecialchars($user['course'] ?? 'Student'); ?></span>
+          </div>
+        </a>
       </div>
     </div>
 
@@ -144,14 +150,16 @@ $base_url_path = '../';
           <input type="hidden" name="book_submit" value="1">
           <input type="hidden" name="start_time" id="start_time_input">
           <input type="hidden" name="end_time" id="end_time_input">
+          <input type="hidden" name="mode" id="mode_input" value="Face-to-face">
+          <input type="hidden" name="concern_category" id="concern_input" value="Academic stress">
 
           <div class="grid cols-2">
             <!-- LEFT: COUNSELOR & DATE & SLOT GRID -->
             <div class="card">
-              <h3 style="margin-bottom:14px;">1. Choose Date & Time Slot</h3>
+              <h3 style="margin-bottom:14px;">1. Choose Counselor & Time Slot</h3>
               
               <div class="field" style="margin-bottom:12px;">
-                <label>Counselor</label>
+                <label>Guidance Counselor</label>
                 <select name="counselor_id" id="counselor_select" onchange="loadTimeSlots()" required>
                   <?php foreach ($counselors as $c): ?>
                     <option value="<?php echo $c['id']; ?>"><?php echo htmlspecialchars($c['name']); ?> (<?php echo htmlspecialchars($c['specialization']); ?>)</option>
@@ -164,7 +172,7 @@ $base_url_path = '../';
                 <input type="date" name="date" id="date_input" min="<?php echo date('Y-m-d'); ?>" value="<?php echo date('Y-m-d', strtotime('+1 day')); ?>" onchange="loadTimeSlots()" required>
               </div>
 
-              <label style="display:block; font-size:12px; font-weight:700; color:var(--muted); margin-bottom:8px;">Available Time Slots</label>
+              <label style="display:block; font-size:12px; font-weight:700; color:var(--muted); margin-bottom:8px;">Available Time Slots (Click to Select)</label>
               <div id="slot_grid_container" class="slot-grid">
                 <!-- Slot items populated via JS -->
               </div>
@@ -173,31 +181,37 @@ $base_url_path = '../';
 
             <!-- RIGHT: DETAILS & CONFIRMATION -->
             <div class="card">
-              <h3 style="margin-bottom:14px;">2. Session Details</h3>
+              <h3 style="margin-bottom:14px;">2. Session Options & Details</h3>
               
-              <div class="field" style="margin-bottom:12px;">
-                <label>Counseling Mode</label>
-                <select name="mode" required>
-                  <option value="Face-to-face">Face-to-face (Room 204)</option>
-                  <option value="Online">Online Session</option>
-                </select>
-              </div>
-
-              <div class="field" style="margin-bottom:12px;">
-                <label>What would you like to talk about?</label>
-                <select name="concern_category" required>
-                  <option value="Academic stress">Academic stress</option>
-                  <option value="Anxiety">Anxiety</option>
-                  <option value="Family concerns">Family concerns</option>
-                  <option value="Peer relationships">Peer relationships</option>
-                  <option value="Career guidance">Career guidance</option>
-                  <option value="Prefer not to say">Prefer not to say</option>
-                </select>
+              <div class="field" style="margin-bottom:14px;">
+                <label>Counseling Mode (Click to Select)</label>
+                <div class="chip-group">
+                  <div class="chip active" onclick="selectChip(this, 'mode_input', 'Face-to-face')">Face-to-face (Guidance Office)</div>
+                  <div class="chip" onclick="selectChip(this, 'mode_input', 'Online Session')">Online Session</div>
+                </div>
               </div>
 
               <div class="field" style="margin-bottom:14px;">
-                <label>Additional Notes / Details (Optional)</label>
-                <textarea name="details" rows="3" placeholder="Share any specific topics or context..."></textarea>
+                <label>What would you like to discuss? (Click Topic)</label>
+                <div class="chip-group">
+                  <div class="chip active" onclick="selectChip(this, 'concern_input', 'Academic stress')">Academic stress</div>
+                  <div class="chip" onclick="selectChip(this, 'concern_input', 'Anxiety & Wellness')">Anxiety & Wellness</div>
+                  <div class="chip" onclick="selectChip(this, 'concern_input', 'Family concerns')">Family concerns</div>
+                  <div class="chip" onclick="selectChip(this, 'concern_input', 'Peer relationships')">Peer relationships</div>
+                  <div class="chip" onclick="selectChip(this, 'concern_input', 'Career & Strand guidance')">Career & Strand guidance</div>
+                  <div class="chip" onclick="selectChip(this, 'concern_input', 'Prefer not to say')">Prefer not to say</div>
+                </div>
+              </div>
+
+              <div class="field" style="margin-bottom:14px;">
+                <label>Additional Notes / Quick Topics (Optional)</label>
+                <div style="margin-bottom:8px;">
+                  <span class="quick-tag" onclick="appendTag('Exam Preparation')">+ Exam Prep</span>
+                  <span class="quick-tag" onclick="appendTag('Senior High Strand Selection')">+ Strand Selection</span>
+                  <span class="quick-tag" onclick="appendTag('Classroom Stress')">+ Class Stress</span>
+                  <span class="quick-tag" onclick="appendTag('Personal Counseling')">+ Personal Wellness</span>
+                </div>
+                <textarea name="details" id="details_input" rows="3" placeholder="Share any specific notes or click quick tags above..."></textarea>
               </div>
 
               <button type="submit" id="confirm_btn" class="btn btn-primary" style="width:100%; justify-content:center;" disabled>Confirm Booking</button>
@@ -246,6 +260,21 @@ function switchTabDirect(paneId){
   if(btn) showTab(btn, paneId);
 }
 
+function selectChip(el, inputId, val){
+  el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(inputId).value = val;
+}
+
+function appendTag(txt){
+  const textarea = document.getElementById('details_input');
+  if(textarea.value.trim() === ""){
+    textarea.value = txt;
+  } else {
+    textarea.value += ", " + txt;
+  }
+}
+
 function loadTimeSlots(){
   const counselorId = document.getElementById('counselor_select').value;
   const date = document.getElementById('date_input').value;
@@ -292,7 +321,7 @@ function selectSlot(el, label){
   el.classList.add('selected');
   document.getElementById('start_time_input').value = el.dataset.start;
   document.getElementById('end_time_input').value = el.dataset.end;
-  document.getElementById('slot_note').textContent = `Selected: ${label}`;
+  document.getElementById('slot_note').textContent = `Selected Slot: ${label}`;
   document.getElementById('confirm_btn').disabled = false;
 }
 

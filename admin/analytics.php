@@ -14,7 +14,9 @@ $total_completed = $stats['completed_sessions'] + ($stats['no_shows'] ?? 0);
 $no_show_rate = $total_completed > 0 ? round(($stats['no_shows'] / $total_completed) * 100, 1) . '%' : '8%';
 
 $unread_count = count(getAdminNotifications($_SESSION['user_id'], true));
-$page_title = 'Analytics — Admin Portal — GuideSched';
+$user_initials = strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : ''));
+
+$page_title = 'Analytics — Admin Portal — GuideSched — Cagasat High School';
 $active_page = 'analytics';
 $base_url_path = '../';
 ?>
@@ -35,42 +37,46 @@ $base_url_path = '../';
     <div class="topbar">
       <div>
         <h1>Analytics</h1>
-        <div class="sub">Appointment trends and counseling activity</div>
+        <div class="sub">Appointment trends and guidance counseling activity</div>
       </div>
       <div class="topbar-right">
         <a href="notifications.php" class="bell-btn">
           <?php if ($unread_count > 0): ?><span class="bell-dot"></span><?php endif; ?>
           <span class="icon"><svg><use href="#i-bell"/></svg></span>
         </a>
-        <div class="avatar" style="background:var(--violet-700);">
-          <?php echo strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : '')); ?>
-        </div>
+        <a href="profile.php" class="topbar-user-badge" title="Click to view My Profile">
+          <div class="avatar" style="background:var(--violet-700);"><?php echo $user_initials; ?></div>
+          <div class="user-meta">
+            <span class="user-name"><?php echo htmlspecialchars($user['name']); ?></span>
+            <span class="user-role"><?php echo htmlspecialchars($user['specialization'] ?? ucfirst($_SESSION['role'])); ?></span>
+          </div>
+        </a>
       </div>
     </div>
 
     <!-- CONTENT BODY -->
     <div class="content">
-      <!-- 4 STAT CARDS -->
+      <!-- 4 CLICKABLE STAT CARDS -->
       <div class="grid cols-4" style="margin-bottom:16px;">
-        <div class="card stat">
+        <div class="card stat clickable" onclick="location.href='reports.php'" title="Click to view reports">
           <div class="icon-wrap"><svg><use href="#i-cal"/></svg></div>
           <div class="num"><?php echo $stats['total_appointments']; ?></div>
-          <div class="lbl">Appointments this month</div>
+          <div class="lbl">Appointments this month ➜</div>
         </div>
-        <div class="card stat">
+        <div class="card stat clickable" onclick="location.href='reports.php?status=no_show'" title="Click to filter no-shows">
           <div class="icon-wrap" style="background:var(--red-bg); color:var(--red);"><svg><use href="#i-x"/></svg></div>
           <div class="num"><?php echo $no_show_rate; ?></div>
-          <div class="lbl">No-show rate</div>
+          <div class="lbl">No-show rate ➜</div>
         </div>
-        <div class="card stat">
+        <div class="card stat clickable" onclick="location.href='analytics.php'" title="Click to inspect concerns">
           <div class="icon-wrap"><svg><use href="#i-chart"/></svg></div>
           <div class="num" style="font-size:20px;">Academic stress</div>
-          <div class="lbl">Top concern</div>
+          <div class="lbl">Top concern ➜</div>
         </div>
-        <div class="card stat">
+        <div class="card stat clickable" onclick="location.href='appointments.php'" title="Click to view appointments">
           <div class="icon-wrap"><svg><use href="#i-clock"/></svg></div>
           <div class="num"><?php echo max(5, round($stats['total_appointments'] / 4)); ?></div>
-          <div class="lbl">Avg. sessions / week</div>
+          <div class="lbl">Avg. sessions / week ➜</div>
         </div>
       </div>
 

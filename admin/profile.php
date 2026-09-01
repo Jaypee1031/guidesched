@@ -47,7 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $unread_count = count(getAdminNotifications($_SESSION['user_id'], true));
-$page_title = 'My Profile — Admin Portal — GuideSched';
+$user_initials = strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : ''));
+
+$page_title = 'My Profile — Admin Portal — GuideSched — Cagasat High School';
 $active_page = 'profile';
 $base_url_path = '../';
 ?>
@@ -75,9 +77,13 @@ $base_url_path = '../';
           <?php if ($unread_count > 0): ?><span class="bell-dot"></span><?php endif; ?>
           <span class="icon"><svg><use href="#i-bell"/></svg></span>
         </a>
-        <div class="avatar" style="background:var(--violet-700);">
-          <?php echo strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : '')); ?>
-        </div>
+        <a href="profile.php" class="topbar-user-badge" title="Click to view My Profile">
+          <div class="avatar" style="background:var(--violet-700);"><?php echo $user_initials; ?></div>
+          <div class="user-meta">
+            <span class="user-name"><?php echo htmlspecialchars($user['name']); ?></span>
+            <span class="user-role"><?php echo htmlspecialchars($user['specialization'] ?? ucfirst($_SESSION['role'])); ?></span>
+          </div>
+        </a>
       </div>
     </div>
 
@@ -95,7 +101,7 @@ $base_url_path = '../';
         <div class="card">
           <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
             <div class="avatar" style="width:64px;height:64px;font-size:20px;background:var(--violet-700);">
-              <?php echo strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : '')); ?>
+              <?php echo $user_initials; ?>
             </div>
             <div>
               <h3 style="font-size:17px;"><?php echo htmlspecialchars($user['name']); ?></h3>
@@ -111,12 +117,17 @@ $base_url_path = '../';
                 <input type="text" name="name" value="<?php echo htmlspecialchars($user['name']); ?>" required>
               </div>
               <div class="field">
-                <label>Title / Specialization</label>
-                <input type="text" name="specialization" value="<?php echo htmlspecialchars($user['specialization'] ?? 'Guidance Counselor'); ?>" required>
+                <label>Title / Specialization (Selectable)</label>
+                <select name="specialization" required>
+                  <option value="Academic Counseling" <?php echo ($user['specialization'] ?? '') === 'Academic Counseling' ? 'selected' : ''; ?>>Academic Counseling</option>
+                  <option value="Career & Strand Guidance" <?php echo ($user['specialization'] ?? '') === 'Career & Strand Guidance' ? 'selected' : ''; ?>>Career & Strand Guidance</option>
+                  <option value="Behavioral & Emotional Wellness" <?php echo ($user['specialization'] ?? '') === 'Behavioral & Emotional Wellness' ? 'selected' : ''; ?>>Behavioral & Emotional Wellness</option>
+                  <option value="Personal & Crisis Counseling" <?php echo ($user['specialization'] ?? '') === 'Personal & Crisis Counseling' ? 'selected' : ''; ?>>Personal & Crisis Counseling</option>
+                </select>
               </div>
               <div class="field">
-                <label>Department</label>
-                <input type="text" value="Guidance Office — QSU Diffun Campus" disabled>
+                <label>Department / Institution</label>
+                <input type="text" value="Guidance Office — Cagasat High School" disabled>
               </div>
               <div class="field">
                 <label>Email Address</label>
@@ -127,8 +138,8 @@ $base_url_path = '../';
                 <input type="text" value="Mon–Fri, 8:00 AM – 5:00 PM" disabled>
               </div>
               <div class="field">
-                <label>Room Number</label>
-                <input type="text" value="Room 204" disabled>
+                <label>Room Location</label>
+                <input type="text" value="Guidance Office — Room 102" disabled>
               </div>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top:10px;">Save Profile Changes</button>
@@ -178,7 +189,7 @@ $base_url_path = '../';
           <div class="quote-card" style="margin-top:18px;">
             <p class="q" style="font-size:13px;">
               <span class="icon" style="display:inline-block;vertical-align:-4px;margin-right:6px;"><svg width="16" height="16"><use href="#i-shield"/></svg></span>
-              Student records remain confidential and are visible only to assigned counselors.
+              Student records remain confidential and are visible only to assigned guidance counselors.
             </p>
           </div>
         </div>

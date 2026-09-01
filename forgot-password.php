@@ -1,19 +1,32 @@
 <?php
 require_once 'config/config.php';
+require_once 'includes/auth_functions.php';
 
-$message = '';
 $error = '';
+$success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = sanitizeInput($_POST['email'] ?? '');
-    if ($email) {
-        $message = 'If an account exists for ' . htmlspecialchars($email) . ', a password reset link has been sent to your email.';
+    if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
+        $error = 'Security validation failed. Please try again.';
     } else {
-        $error = 'Please enter a valid email address.';
+        $email = sanitizeInput($_POST['email']);
+        
+        $conn = getDBConnection();
+        $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result->num_rows > 0) {
+            $success = 'If an account exists with that email, password reset instructions have been sent. Please contact the Guidance Office.';
+        } else {
+            $success = 'If an account exists with that email, password reset instructions have been sent.';
+        }
+        closeDBConnection($conn);
     }
 }
 
-$page_title = 'Reset Password — GuideSched';
+$page_title = 'Forgot Password — GuideSched — Cagasat High School';
 $base_url_path = '';
 ?>
 <!DOCTYPE html>
@@ -23,35 +36,37 @@ $base_url_path = '';
 </head>
 <body>
 
-<div class="authpage active" id="page-forgot">
+<div class="authpage">
   <div class="auth-card">
     <div class="brand">
       <div class="brand-mark">GS</div>
       <div class="brand-text">
         <div class="name">GuideSched</div>
-        <div class="portal">QSU DIFFUN CAMPUS</div>
+        <div class="portal">CAGASAT HIGH SCHOOL</div>
       </div>
     </div>
-    <h2>Reset your password</h2>
-    <div class="auth-sub">Enter your email and we'll send you a reset link</div>
+    <h2>Reset Password</h2>
+    <div class="auth-sub">Enter your email to receive password reset instructions</div>
 
-    <?php if ($message): ?>
-      <div class="alert-box alert-success"><?php echo $message; ?></div>
-    <?php endif; ?>
     <?php if ($error): ?>
-      <div class="alert-box alert-danger"><?php echo $error; ?></div>
+      <div class="alert-box alert-danger"><?php echo htmlspecialchars($error); ?></div>
+    <?php endif; ?>
+
+    <?php if ($success): ?>
+      <div class="alert-box alert-success"><?php echo htmlspecialchars($success); ?></div>
     <?php endif; ?>
 
     <form method="POST" action="">
-      <div class="field" style="margin-bottom:8px;">
+      <?php addCSRFToken(); ?>
+      <div class="field" style="margin-bottom:18px;">
         <label>Email Address</label>
-        <input type="email" name="email" placeholder="you@qsu.edu.ph" required>
+        <input type="email" name="email" placeholder="you@cagasaths.edu.ph" required>
       </div>
-      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:14px;">Send Reset Link</button>
+      <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Send Reset Link</button>
     </form>
 
     <div class="foot-note">
-      <a href="login.php" class="link-btn">Back to Log In</a>
+      Remember your password? <a href="login.php" class="link-btn">Log in</a>
     </div>
   </div>
 </div>

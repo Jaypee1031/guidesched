@@ -2,7 +2,6 @@
 require_once 'config/config.php';
 require_once 'includes/auth_functions.php';
 
-// If already logged in, redirect to appropriate dashboard
 if (isLoggedIn()) {
     $role = getUserRole();
     if ($role === 'student') {
@@ -15,12 +14,10 @@ if (isLoggedIn()) {
 $error = '';
 $success = '';
 
-// Check for session expired message
 if (isset($_GET['session_expired']) && $_GET['session_expired'] === 'true') {
     $error = 'Your session has expired. Please login again.';
 }
 
-// Handle login form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_POST['csrf_token']) || !validateCSRFToken($_POST['csrf_token'])) {
         $error = 'Security validation failed. Please try again.';
@@ -47,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$page_title = 'Login — GuideSched';
+$page_title = 'Login — GuideSched — Cagasat High School';
 $base_url_path = '';
 ?>
 <!DOCTYPE html>
@@ -63,7 +60,7 @@ $base_url_path = '';
       <div class="brand-mark">GS</div>
       <div class="brand-text">
         <div class="name">GuideSched</div>
-        <div class="portal">QSU DIFFUN CAMPUS</div>
+        <div class="portal">CAGASAT HIGH SCHOOL</div>
       </div>
     </div>
     <h2>Welcome back</h2>
@@ -81,7 +78,7 @@ $base_url_path = '';
       <?php addCSRFToken(); ?>
       <div class="field">
         <label>Email Address</label>
-        <input type="email" name="email" placeholder="you@qsu.edu.ph" required value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
+        <input type="email" name="email" placeholder="you@cagasaths.edu.ph" required value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
       </div>
       <div class="field" style="margin-bottom:8px;">
         <label>Password</label>

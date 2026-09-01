@@ -32,7 +32,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $unread_count = count(getAdminNotifications($_SESSION['user_id'], true));
-$page_title = 'Add Counselor — Admin Portal — GuideSched';
+$user_initials = strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : ''));
+
+$page_title = 'Add Counselor — Admin Portal — GuideSched — Cagasat High School';
 $active_page = 'counselors';
 $base_url_path = '../';
 ?>
@@ -57,9 +59,13 @@ $base_url_path = '../';
       </div>
       <div class="topbar-right">
         <a href="counselors.php" class="btn btn-outline">Back to Counselors</a>
-        <div class="avatar" style="background:var(--violet-700);">
-          <?php echo strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : '')); ?>
-        </div>
+        <a href="profile.php" class="topbar-user-badge" title="Click to view My Profile">
+          <div class="avatar" style="background:var(--violet-700);"><?php echo $user_initials; ?></div>
+          <div class="user-meta">
+            <span class="user-name"><?php echo htmlspecialchars($user['name']); ?></span>
+            <span class="user-role"><?php echo htmlspecialchars($user['specialization'] ?? ucfirst($_SESSION['role'])); ?></span>
+          </div>
+        </a>
       </div>
     </div>
 
@@ -87,11 +93,16 @@ $base_url_path = '../';
             </div>
             <div class="field">
               <label>Email Address</label>
-              <input type="email" name="email" required placeholder="g.fontanilla@qsu.edu.ph">
+              <input type="email" name="email" required placeholder="g.fontanilla@cagasaths.edu.ph">
             </div>
             <div class="field">
-              <label>Specialization</label>
-              <input type="text" name="specialization" required placeholder="Academic Counseling">
+              <label>Specialization (Selectable)</label>
+              <select name="specialization" required>
+                <option value="Academic Counseling">Academic Counseling</option>
+                <option value="Career & Strand Guidance" selected>Career & Strand Guidance</option>
+                <option value="Behavioral & Emotional Wellness">Behavioral & Emotional Wellness</option>
+                <option value="Personal & Crisis Counseling">Personal & Crisis Counseling</option>
+              </select>
             </div>
             <div class="field">
               <label>Contact Number</label>

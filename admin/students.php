@@ -8,7 +8,16 @@ requireAnyRole(['admin', 'counselor']);
 
 $user = getUserProfile($_SESSION['user_id']);
 $search = isset($_GET['search']) ? sanitizeInput($_GET['search']) : '';
+$grade_filter = isset($_GET['grade']) ? sanitizeInput($_GET['grade']) : '';
+
 $students = getAllStudents($search);
+
+// Filter by grade level if selected
+if ($grade_filter) {
+    $students = array_filter($students, function($s) use ($grade_filter) {
+        return strpos($s['course'] ?? '', $grade_filter) !== false;
+    });
+}
 
 $selected_student_id = isset($_GET['student_id']) && is_numeric($_GET['student_id']) ? intval($_GET['student_id']) : null;
 $student_history = [];
@@ -25,7 +34,9 @@ if ($selected_student_id) {
 }
 
 $unread_count = count(getAdminNotifications($_SESSION['user_id'], true));
-$page_title = 'Students — Admin Portal — GuideSched';
+$user_initials = strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : ''));
+
+$page_title = 'Students — Admin Portal — GuideSched — Cagasat High School';
 $active_page = 'students';
 $base_url_path = '../';
 ?>
@@ -46,28 +57,43 @@ $base_url_path = '../';
     <div class="topbar">
       <div>
         <h1>Student Management</h1>
-        <div class="sub">View student profiles and appointment history</div>
+        <div class="sub">View student profiles and guidance appointment history</div>
       </div>
       <div class="topbar-right">
         <a href="notifications.php" class="bell-btn">
           <?php if ($unread_count > 0): ?><span class="bell-dot"></span><?php endif; ?>
           <span class="icon"><svg><use href="#i-bell"/></svg></span>
         </a>
-        <div class="avatar" style="background:var(--violet-700);">
-          <?php echo strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : '')); ?>
-        </div>
+        <a href="profile.php" class="topbar-user-badge" title="Click to view My Profile">
+          <div class="avatar" style="background:var(--violet-700);"><?php echo $user_initials; ?></div>
+          <div class="user-meta">
+            <span class="user-name"><?php echo htmlspecialchars($user['name']); ?></span>
+            <span class="user-role"><?php echo htmlspecialchars($user['specialization'] ?? ucfirst($_SESSION['role'])); ?></span>
+          </div>
+        </a>
       </div>
     </div>
 
     <!-- CONTENT BODY -->
     <div class="content">
-      <!-- SEARCH CARD -->
+      <!-- SEARCH & FILTER CARD -->
       <div class="card" style="margin-bottom:16px;">
-        <form method="GET" action="" style="display:flex; gap:12px;">
-          <div style="flex:1;">
-            <input type="text" name="search" placeholder="Search by student name, ID, course, or email..." value="<?php echo htmlspecialchars($search); ?>" style="width:100%; padding:10px 14px; border-radius:9px; border:1px solid var(--line); font-size:13.5px;">
+        <form method="GET" action="" style="display:flex; gap:12px; flex-wrap:wrap;">
+          <div style="flex:2; min-width:200px;">
+            <input type="text" name="search" placeholder="Search by student name, LRN/ID, or email..." value="<?php echo htmlspecialchars($search); ?>" style="width:100%; padding:10px 14px; border-radius:9px; border:1px solid var(--line); font-size:13.5px;">
           </div>
-          <button type="submit" class="btn btn-primary">Search</button>
+          <div style="flex:1; min-width:180px;">
+            <select name="grade" onchange="this.form.submit()" style="width:100%; padding:10px 12px; border-radius:9px; border:1px solid var(--line); font-size:13.5px;">
+              <option value="">All Departments & Grades</option>
+              <option value="Grade 7" <?php echo $grade_filter === 'Grade 7' ? 'selected' : ''; ?>>Grade 7</option>
+              <option value="Grade 8" <?php echo $grade_filter === 'Grade 8' ? 'selected' : ''; ?>>Grade 8</option>
+              <option value="Grade 9" <?php echo $grade_filter === 'Grade 9' ? 'selected' : ''; ?>>Grade 9</option>
+              <option value="Grade 10" <?php echo $grade_filter === 'Grade 10' ? 'selected' : ''; ?>>Grade 10</option>
+              <option value="Grade 11" <?php echo $grade_filter === 'Grade 11' ? 'selected' : ''; ?>>Grade 11 (Senior High)</option>
+              <option value="Grade 12" <?php echo $grade_filter === 'Grade 12' ? 'selected' : ''; ?>>Grade 12 (Senior High)</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">Search & Filter</button>
         </form>
       </div>
 
@@ -79,14 +105,14 @@ $base_url_path = '../';
           </div>
 
           <?php if (empty($students)): ?>
-            <div class="empty-note">No students found matching your query.</div>
+            <div class="empty-note">No students found matching your criteria.</div>
           <?php else: ?>
             <table>
               <thead>
                 <tr>
                   <th>Student</th>
-                  <th>Student ID</th>
-                  <th>Course & Yr</th>
+                  <th>LRN / Student ID</th>
+                  <th>Department & Grade</th>
                   <th>Status</th>
                   <th>Action</th>
                 </tr>
@@ -104,7 +130,7 @@ $base_url_path = '../';
                       </div>
                     </td>
                     <td><?php echo htmlspecialchars($s['student_number']); ?></td>
-                    <td><?php echo htmlspecialchars($s['course']) . ' — Yr ' . $s['year_level']; ?></td>
+                    <td><span class="tag"><?php echo htmlspecialchars($s['course'] ?? 'General Student'); ?></span></td>
                     <td><span class="pill confirmed"><?php echo ucfirst($s['status']); ?></span></td>
                     <td>
                       <a href="students.php?student_id=<?php echo $s['id']; ?><?php echo $search ? '&search=' . urlencode($search) : ''; ?>" class="btn btn-ghost btn-sm">View Profile</a>
@@ -120,7 +146,7 @@ $base_url_path = '../';
         <?php if ($selected_student_id && $selected_student): ?>
           <div class="card">
             <div class="card-head">
-              <h3>Student Profile</h3>
+              <h3>Student Profile Overview</h3>
               <a href="students.php<?php echo $search ? '?search=' . urlencode($search) : ''; ?>" class="link-btn">Close</a>
             </div>
 
@@ -133,13 +159,13 @@ $base_url_path = '../';
             </div>
 
             <div class="form-grid" style="margin-bottom:18px;">
-              <div><div style="font-size:11px;color:var(--faint);font-weight:700;">STUDENT ID</div><div style="font-weight:700;font-size:13.5px;"><?php echo htmlspecialchars($selected_student['student_number']); ?></div></div>
-              <div><div style="font-size:11px;color:var(--faint);font-weight:700;">COURSE & YEAR</div><div style="font-weight:700;font-size:13.5px;"><?php echo htmlspecialchars($selected_student['course']) . ' — Yr ' . $selected_student['year_level']; ?></div></div>
+              <div><div style="font-size:11px;color:var(--faint);font-weight:700;">LRN / STUDENT ID</div><div style="font-weight:700;font-size:13.5px;"><?php echo htmlspecialchars($selected_student['student_number']); ?></div></div>
+              <div><div style="font-size:11px;color:var(--faint);font-weight:700;">GRADE & STRAND</div><div style="font-weight:700;font-size:13.5px;"><?php echo htmlspecialchars($selected_student['course']); ?></div></div>
               <div><div style="font-size:11px;color:var(--faint);font-weight:700;">CONTACT</div><div style="font-weight:700;font-size:13.5px;"><?php echo htmlspecialchars($selected_student['contact_number']); ?></div></div>
               <div><div style="font-size:11px;color:var(--faint);font-weight:700;">REGISTERED</div><div style="font-weight:700;font-size:13.5px;"><?php echo formatDate($selected_student['created_at']); ?></div></div>
             </div>
 
-            <h4 style="font-size:14px; margin-bottom:12px;">Appointment History</h4>
+            <h4 style="font-size:14px; margin-bottom:12px;">Guidance Session History</h4>
             <?php if (empty($student_history)): ?>
               <div class="empty-note">No appointment history for this student.</div>
             <?php else: ?>

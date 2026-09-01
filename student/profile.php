@@ -27,12 +27,20 @@ $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['update_profile'])) {
+        $dept_grade = sanitizeInput($_POST['course']);
+        $year_lvl = 7;
+        if (strpos($dept_grade, 'Grade 8') !== false) { $year_lvl = 8; }
+        elseif (strpos($dept_grade, 'Grade 9') !== false) { $year_lvl = 9; }
+        elseif (strpos($dept_grade, 'Grade 10') !== false) { $year_lvl = 10; }
+        elseif (strpos($dept_grade, 'Grade 11') !== false) { $year_lvl = 11; }
+        elseif (strpos($dept_grade, 'Grade 12') !== false) { $year_lvl = 12; }
+
         $data = [
             'name' => sanitizeInput($_POST['name']),
             'email' => sanitizeInput($_POST['email']),
             'student_number' => sanitizeInput($_POST['student_number']),
-            'course' => sanitizeInput($_POST['course']),
-            'year_level' => intval($_POST['year_level']),
+            'course' => $dept_grade,
+            'year_level' => $year_lvl,
             'contact_number' => sanitizeInput($_POST['contact_number'])
         ];
         
@@ -62,7 +70,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $unread_count = count(getStudentNotifications($_SESSION['user_id'], true));
-$page_title = 'My Profile — GuideSched';
+$user_initials = strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : ''));
+
+$page_title = 'My Profile — GuideSched — Cagasat High School';
 $active_page = 'profile';
 $base_url_path = '../';
 ?>
@@ -90,9 +100,13 @@ $base_url_path = '../';
           <?php if ($unread_count > 0): ?><span class="bell-dot"></span><?php endif; ?>
           <span class="icon"><svg><use href="#i-bell"/></svg></span>
         </a>
-        <div class="avatar">
-          <?php echo strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : '')); ?>
-        </div>
+        <a href="profile.php" class="topbar-user-badge" title="Click to view My Profile">
+          <div class="avatar"><?php echo $user_initials; ?></div>
+          <div class="user-meta">
+            <span class="user-name"><?php echo htmlspecialchars($user['name']); ?></span>
+            <span class="user-role"><?php echo htmlspecialchars($user['course'] ?? 'Student'); ?></span>
+          </div>
+        </a>
       </div>
     </div>
 
@@ -110,11 +124,11 @@ $base_url_path = '../';
         <div class="card">
           <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
             <div class="avatar" style="width:64px;height:64px;font-size:20px;">
-              <?php echo strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : '')); ?>
+              <?php echo $user_initials; ?>
             </div>
             <div>
               <h3 style="font-size:17px;"><?php echo htmlspecialchars($user['name']); ?></h3>
-              <div class="sub" style="color:var(--muted);font-size:13px;">Student ID: <?php echo htmlspecialchars($user['student_number']); ?></div>
+              <div class="sub" style="color:var(--muted);font-size:13px;">Student LRN / ID: <?php echo htmlspecialchars($user['student_number']); ?></div>
             </div>
           </div>
 
@@ -126,23 +140,34 @@ $base_url_path = '../';
                 <input type="text" name="name" value="<?php echo htmlspecialchars($user['name']); ?>" required>
               </div>
               <div class="field">
-                <label>Student ID</label>
+                <label>LRN / Student ID</label>
                 <input type="text" name="student_number" value="<?php echo htmlspecialchars($user['student_number']); ?>" required>
               </div>
-              <div class="field">
-                <label>Course / Program</label>
-                <input type="text" name="course" value="<?php echo htmlspecialchars($user['course']); ?>" required>
-              </div>
-              <div class="field">
-                <label>Year Level</label>
-                <select name="year_level" required>
-                  <option value="1" <?php echo $user['year_level'] == 1 ? 'selected' : ''; ?>>1st Year</option>
-                  <option value="2" <?php echo $user['year_level'] == 2 ? 'selected' : ''; ?>>2nd Year</option>
-                  <option value="3" <?php echo $user['year_level'] == 3 ? 'selected' : ''; ?>>3rd Year</option>
-                  <option value="4" <?php echo $user['year_level'] == 4 ? 'selected' : ''; ?>>4th Year</option>
-                  <option value="5" <?php echo $user['year_level'] == 5 ? 'selected' : ''; ?>>5th Year</option>
-                </select>
-              </div>
+            </div>
+
+            <div class="field">
+              <label>Department & Grade Level / Strand (Selectable)</label>
+              <select name="course" required>
+                <optgroup label="Junior High School Department">
+                  <option value="Grade 7 (Junior High)" <?php echo ($user['course'] ?? '') === 'Grade 7 (Junior High)' ? 'selected' : ''; ?>>Grade 7 (Junior High)</option>
+                  <option value="Grade 8 (Junior High)" <?php echo ($user['course'] ?? '') === 'Grade 8 (Junior High)' ? 'selected' : ''; ?>>Grade 8 (Junior High)</option>
+                  <option value="Grade 9 (Junior High)" <?php echo ($user['course'] ?? '') === 'Grade 9 (Junior High)' ? 'selected' : ''; ?>>Grade 9 (Junior High)</option>
+                  <option value="Grade 10 (Junior High)" <?php echo ($user['course'] ?? '') === 'Grade 10 (Junior High)' ? 'selected' : ''; ?>>Grade 10 (Junior High)</option>
+                </optgroup>
+                <optgroup label="Senior High School Department">
+                  <option value="Grade 11 - STEM" <?php echo ($user['course'] ?? '') === 'Grade 11 - STEM' ? 'selected' : ''; ?>>Grade 11 - STEM</option>
+                  <option value="Grade 11 - ABM" <?php echo ($user['course'] ?? '') === 'Grade 11 - ABM' ? 'selected' : ''; ?>>Grade 11 - ABM</option>
+                  <option value="Grade 11 - HUMSS" <?php echo ($user['course'] ?? '') === 'Grade 11 - HUMSS' ? 'selected' : ''; ?>>Grade 11 - HUMSS</option>
+                  <option value="Grade 11 - TVL" <?php echo ($user['course'] ?? '') === 'Grade 11 - TVL' ? 'selected' : ''; ?>>Grade 11 - TVL</option>
+                  <option value="Grade 12 - STEM" <?php echo ($user['course'] ?? '') === 'Grade 12 - STEM' ? 'selected' : ''; ?>>Grade 12 - STEM</option>
+                  <option value="Grade 12 - ABM" <?php echo ($user['course'] ?? '') === 'Grade 12 - ABM' ? 'selected' : ''; ?>>Grade 12 - ABM</option>
+                  <option value="Grade 12 - HUMSS" <?php echo ($user['course'] ?? '') === 'Grade 12 - HUMSS' ? 'selected' : ''; ?>>Grade 12 - HUMSS</option>
+                  <option value="Grade 12 - TVL" <?php echo ($user['course'] ?? '') === 'Grade 12 - TVL' ? 'selected' : ''; ?>>Grade 12 - TVL</option>
+                </optgroup>
+              </select>
+            </div>
+
+            <div class="form-grid">
               <div class="field">
                 <label>Email Address</label>
                 <input type="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required>

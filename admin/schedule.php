@@ -42,7 +42,9 @@ if ($counselor_filter) {
 }
 
 $unread_count = count(getAdminNotifications($_SESSION['user_id'], true));
-$page_title = 'Schedule Management — Admin Portal — GuideSched';
+$user_initials = strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : ''));
+
+$page_title = 'Schedule Management — Admin Portal — GuideSched — Cagasat High School';
 $active_page = 'schedule';
 $base_url_path = '../';
 ?>
@@ -70,9 +72,13 @@ $base_url_path = '../';
           <?php if ($unread_count > 0): ?><span class="bell-dot"></span><?php endif; ?>
           <span class="icon"><svg><use href="#i-bell"/></svg></span>
         </a>
-        <div class="avatar" style="background:var(--violet-700);">
-          <?php echo strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : '')); ?>
-        </div>
+        <a href="profile.php" class="topbar-user-badge" title="Click to view My Profile">
+          <div class="avatar" style="background:var(--violet-700);"><?php echo $user_initials; ?></div>
+          <div class="user-meta">
+            <span class="user-name"><?php echo htmlspecialchars($user['name']); ?></span>
+            <span class="user-role"><?php echo htmlspecialchars($user['specialization'] ?? ucfirst($_SESSION['role'])); ?></span>
+          </div>
+        </a>
       </div>
     </div>
 

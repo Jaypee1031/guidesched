@@ -22,7 +22,9 @@ foreach ($all_apts as $apt) {
 $recent_notifications = array_slice(getStudentNotifications($_SESSION['user_id']), 0, 3);
 $unread_count = count(getStudentNotifications($_SESSION['user_id'], true));
 
-$page_title = 'Home — Student Portal — GuideSched';
+$user_initials = strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : ''));
+
+$page_title = 'Home — Student Portal — GuideSched — Cagasat High School';
 $active_page = 'home';
 $base_url_path = '../';
 ?>
@@ -43,16 +45,20 @@ $base_url_path = '../';
     <div class="topbar">
       <div>
         <h1>Welcome, <?php echo htmlspecialchars(explode(' ', trim($user['name']))[0]); ?></h1>
-        <div class="sub"><?php echo date('l, F j, Y'); ?> · QSU Diffun Guidance Office</div>
+        <div class="sub"><?php echo date('l, F j, Y'); ?> · Cagasat High School Guidance Office</div>
       </div>
       <div class="topbar-right">
         <a href="notifications.php" class="bell-btn">
           <?php if ($unread_count > 0): ?><span class="bell-dot"></span><?php endif; ?>
           <span class="icon"><svg><use href="#i-bell"/></svg></span>
         </a>
-        <div class="avatar">
-          <?php echo strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : '')); ?>
-        </div>
+        <a href="profile.php" class="topbar-user-badge" title="Click to view My Profile">
+          <div class="avatar"><?php echo $user_initials; ?></div>
+          <div class="user-meta">
+            <span class="user-name"><?php echo htmlspecialchars($user['name']); ?></span>
+            <span class="user-role"><?php echo htmlspecialchars($user['course'] ?? 'Student'); ?></span>
+          </div>
+        </a>
       </div>
     </div>
 
@@ -62,7 +68,7 @@ $base_url_path = '../';
       <div class="banner">
         <div>
           <h2>Ready to talk to someone?</h2>
-          <p>Booking a session takes less than a minute — private, flexible, and always confidential.</p>
+          <p>Booking a guidance session takes less than a minute — private, flexible, and always confidential.</p>
         </div>
         <a href="appointments.php?tab=book" class="btn btn-primary">
           <span class="icon"><svg><use href="#i-plus"/></svg></span>Book an Appointment
@@ -109,21 +115,21 @@ $base_url_path = '../';
           <?php endif; ?>
         </div>
 
-        <!-- QUOTE CARD & QUICK STATS -->
+        <!-- QUOTE CARD & CLICKABLE QUICK STATS -->
         <div class="quote-card">
           <p class="q">"It's okay to ask for help. Reaching out is a sign of strength, not weakness."</p>
-          <p class="a">Today's reminder from the Guidance Office</p>
+          <p class="a">Today's reminder from Cagasat High School Guidance Office</p>
           <div style="margin-top:18px; display:flex; gap:24px;">
-            <div>
+            <div onclick="location.href='appointments.php?tab=past'" style="cursor:pointer;" title="Click to view past sessions">
               <div class="stat">
-                <div class="num" style="font-size:22px;"><?php echo $stats['completed']; ?></div>
-                <div class="lbl">Sessions attended</div>
+                <div class="num" style="font-size:22px; color:var(--violet-700);"><?php echo $stats['completed']; ?></div>
+                <div class="lbl" style="text-decoration:underline;">Sessions attended ➜</div>
               </div>
             </div>
-            <div>
+            <div onclick="location.href='analytics.php'" style="cursor:pointer;" title="Click to view My Insights">
               <div class="stat">
-                <div class="num" style="font-size:22px;"><?php echo max(1, min($stats['completed'], 3)); ?></div>
-                <div class="lbl">Month streak</div>
+                <div class="num" style="font-size:22px; color:var(--violet-700);"><?php echo max(1, min($stats['completed'], 3)); ?></div>
+                <div class="lbl" style="text-decoration:underline;">Month streak ➜</div>
               </div>
             </div>
           </div>

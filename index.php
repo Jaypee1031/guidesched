@@ -1,6 +1,6 @@
 <?php
 require_once 'config/config.php';
-$page_title = 'GuideSched — Guidance Counseling System';
+$page_title = 'GuideSched — Cagasat High School Guidance Services';
 $base_url_path = '';
 ?>
 <!DOCTYPE html>
@@ -40,7 +40,7 @@ $base_url_path = '';
     <div class="brand-mark">GS</div>
     <div class="brand-text">
       <div class="name">GuideSched</div>
-      <div class="portal">QSU DIFFUN CAMPUS</div>
+      <div class="portal">CAGASAT HIGH SCHOOL</div>
     </div>
   </div>
   <div style="display:flex; gap:12px;">
@@ -51,7 +51,7 @@ $base_url_path = '';
 
 <div class="landing-hero">
   <h1>Your Guidance. Your Schedule. Your Well-being.</h1>
-  <p>Making guidance counseling more accessible, confidential, and flexible for QSU Diffun students.</p>
+  <p>Making guidance counseling more accessible, confidential, and flexible for Cagasat High School students.</p>
   <a href="register.php" class="btn btn-primary" style="padding: 12px 28px; font-size: 15px;">Book an Appointment</a>
 </div>
 
@@ -65,7 +65,7 @@ $base_url_path = '';
     <div class="feat-card">
       <div class="feat-icon"><svg width="24" height="24"><use href="#i-cal"/></svg></div>
       <h3>Easy Scheduling</h3>
-      <p style="color:var(--muted); font-size:13.5px; margin-top:8px;">Choose your preferred counselor, date, and time slot with instant confirmation.</p>
+      <p style="color:var(--muted); font-size:13.5px; margin-top:8px;">Choose your preferred guidance counselor, date, and time slot with instant confirmation.</p>
     </div>
     <div class="feat-card">
       <div class="feat-icon"><svg width="24" height="24"><use href="#i-bell"/></svg></div>
@@ -81,7 +81,7 @@ $base_url_path = '';
 </div>
 
 <footer style="text-align:center; padding: 24px; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px;">
-  &copy; <?php echo date('Y'); ?> GuideSched — Guidance Office, QSU Diffun Campus. All rights reserved.
+  &copy; <?php echo date('Y'); ?> GuideSched — Guidance Office, Cagasat High School. All rights reserved.
 </footer>
 
 </body>

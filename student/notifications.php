@@ -26,7 +26,9 @@ $all_notifications = getStudentNotifications($_SESSION['user_id']);
 $unread_notifications = getStudentNotifications($_SESSION['user_id'], true);
 $unread_count = count($unread_notifications);
 
-$page_title = 'Notifications — GuideSched';
+$user_initials = strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : ''));
+
+$page_title = 'Notifications — GuideSched — Cagasat High School';
 $active_page = 'notifications';
 $base_url_path = '../';
 ?>
@@ -53,9 +55,13 @@ $base_url_path = '../';
         <?php if ($unread_count > 0): ?>
           <a href="notifications.php?mark_all_read=1" class="btn btn-outline btn-sm">Mark all read</a>
         <?php endif; ?>
-        <div class="avatar">
-          <?php echo strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : '')); ?>
-        </div>
+        <a href="profile.php" class="topbar-user-badge" title="Click to view My Profile">
+          <div class="avatar"><?php echo $user_initials; ?></div>
+          <div class="user-meta">
+            <span class="user-name"><?php echo htmlspecialchars($user['name']); ?></span>
+            <span class="user-role"><?php echo htmlspecialchars($user['course'] ?? 'Student'); ?></span>
+          </div>
+        </a>
       </div>
     </div>
 

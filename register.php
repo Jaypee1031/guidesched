@@ -20,8 +20,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $name = sanitizeInput($_POST['name']);
         $student_number = sanitizeInput($_POST['student_number']);
-        $course = sanitizeInput($_POST['course']);
-        $year_level = intval($_POST['year_level'] ?? 1);
+        $department_grade = sanitizeInput($_POST['department_grade']);
+        
+        // Extract numeric year level from grade choice
+        $year_level = 7;
+        if (strpos($department_grade, 'Grade 8') !== false) { $year_level = 8; }
+        elseif (strpos($department_grade, 'Grade 9') !== false) { $year_level = 9; }
+        elseif (strpos($department_grade, 'Grade 10') !== false) { $year_level = 10; }
+        elseif (strpos($department_grade, 'Grade 11') !== false) { $year_level = 11; }
+        elseif (strpos($department_grade, 'Grade 12') !== false) { $year_level = 12; }
+
         $email = sanitizeInput($_POST['email']);
         $contact_number = sanitizeInput($_POST['contact_number'] ?? 'N/A');
         $password = $_POST['password'];
@@ -35,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data = [
                 'name' => $name,
                 'student_number' => $student_number,
-                'course' => $course,
+                'course' => $department_grade,
                 'year_level' => $year_level,
                 'email' => $email,
                 'contact_number' => $contact_number,
@@ -53,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$page_title = 'Student Sign Up — GuideSched';
+$page_title = 'Student Sign Up — GuideSched — Cagasat High School';
 $base_url_path = '';
 ?>
 <!DOCTYPE html>
@@ -64,12 +72,12 @@ $base_url_path = '';
 <body>
 
 <div class="authpage active" id="page-signup">
-  <div class="auth-card" style="max-width:460px;">
+  <div class="auth-card" style="max-width:480px;">
     <div class="brand">
       <div class="brand-mark">GS</div>
       <div class="brand-text">
         <div class="name">GuideSched</div>
-        <div class="portal">STUDENT SIGN UP</div>
+        <div class="portal">CAGASAT HIGH SCHOOL</div>
       </div>
     </div>
     <h2>Create your account</h2>
@@ -94,36 +102,45 @@ $base_url_path = '';
         <label>Full Name</label>
         <input type="text" name="name" placeholder="Aira Delos Santos" required value="<?php echo isset($_POST['name']) ? htmlspecialchars($_POST['name']) : ''; ?>">
       </div>
+
       <div class="form-grid">
         <div class="field">
-          <label>Student ID</label>
-          <input type="text" name="student_number" placeholder="2023-0000-DF" required value="<?php echo isset($_POST['student_number']) ? htmlspecialchars($_POST['student_number']) : ''; ?>">
-        </div>
-        <div class="field">
-          <label>Year Level</label>
-          <select name="year_level" required>
-            <option value="1">1st Year</option>
-            <option value="2">2nd Year</option>
-            <option value="3" selected>3rd Year</option>
-            <option value="4">4th Year</option>
-            <option value="5">5th Year</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-grid">
-        <div class="field">
-          <label>Course / Program</label>
-          <input type="text" name="course" placeholder="BSIT" required value="<?php echo isset($_POST['course']) ? htmlspecialchars($_POST['course']) : ''; ?>">
+          <label>LRN / Student ID</label>
+          <input type="text" name="student_number" placeholder="102938475601" required value="<?php echo isset($_POST['student_number']) ? htmlspecialchars($_POST['student_number']) : ''; ?>">
         </div>
         <div class="field">
           <label>Contact Number</label>
           <input type="text" name="contact_number" placeholder="0917 123 4567" required value="<?php echo isset($_POST['contact_number']) ? htmlspecialchars($_POST['contact_number']) : ''; ?>">
         </div>
       </div>
+
+      <div class="field">
+        <label>Department & Grade Level / Strand</label>
+        <select name="department_grade" required>
+          <optgroup label="Junior High School Department">
+            <option value="Grade 7 (Junior High)">Grade 7 (Junior High)</option>
+            <option value="Grade 8 (Junior High)">Grade 8 (Junior High)</option>
+            <option value="Grade 9 (Junior High)">Grade 9 (Junior High)</option>
+            <option value="Grade 10 (Junior High)">Grade 10 (Junior High)</option>
+          </optgroup>
+          <optgroup label="Senior High School Department">
+            <option value="Grade 11 - STEM" selected>Grade 11 - STEM</option>
+            <option value="Grade 11 - ABM">Grade 11 - ABM</option>
+            <option value="Grade 11 - HUMSS">Grade 11 - HUMSS</option>
+            <option value="Grade 11 - TVL">Grade 11 - TVL</option>
+            <option value="Grade 12 - STEM">Grade 12 - STEM</option>
+            <option value="Grade 12 - ABM">Grade 12 - ABM</option>
+            <option value="Grade 12 - HUMSS">Grade 12 - HUMSS</option>
+            <option value="Grade 12 - TVL">Grade 12 - TVL</option>
+          </optgroup>
+        </select>
+      </div>
+
       <div class="field">
         <label>Email Address</label>
-        <input type="email" name="email" placeholder="you@qsu.edu.ph" required value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
+        <input type="email" name="email" placeholder="you@cagasaths.edu.ph" required value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
       </div>
+
       <div class="form-grid">
         <div class="field">
           <label>Password</label>
@@ -134,6 +151,7 @@ $base_url_path = '';
           <input type="password" name="confirm_password" placeholder="••••••••" required>
         </div>
       </div>
+
       <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; margin-top:10px;">Create Account</button>
     </form>
 

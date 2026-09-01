@@ -9,7 +9,9 @@ $user = getUserProfile($_SESSION['user_id']);
 $analytics = getStudentAnalyticsData($_SESSION['user_id']);
 $unread_count = count(getStudentNotifications($_SESSION['user_id'], true));
 
-$page_title = 'My Insights — GuideSched';
+$user_initials = strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : ''));
+
+$page_title = 'My Insights — GuideSched — Cagasat High School';
 $active_page = 'analytics';
 $base_url_path = '../';
 ?>
@@ -37,29 +39,33 @@ $base_url_path = '../';
           <?php if ($unread_count > 0): ?><span class="bell-dot"></span><?php endif; ?>
           <span class="icon"><svg><use href="#i-bell"/></svg></span>
         </a>
-        <div class="avatar">
-          <?php echo strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : '')); ?>
-        </div>
+        <a href="profile.php" class="topbar-user-badge" title="Click to view My Profile">
+          <div class="avatar"><?php echo $user_initials; ?></div>
+          <div class="user-meta">
+            <span class="user-name"><?php echo htmlspecialchars($user['name']); ?></span>
+            <span class="user-role"><?php echo htmlspecialchars($user['course'] ?? 'Student'); ?></span>
+          </div>
+        </a>
       </div>
     </div>
 
     <!-- CONTENT BODY -->
     <div class="content">
       <div class="grid cols-3" style="margin-bottom:16px;">
-        <div class="card stat">
+        <div class="card stat clickable" onclick="location.href='appointments.php?tab=past'" title="Click to view past sessions">
           <div class="icon-wrap"><svg><use href="#i-heart"/></svg></div>
           <div class="num"><?php echo $analytics['attended_count']; ?></div>
-          <div class="lbl">Sessions attended</div>
+          <div class="lbl">Sessions attended ➜</div>
         </div>
-        <div class="card stat">
+        <div class="card stat clickable" onclick="location.href='appointments.php?tab=book'" title="Click to book new session">
           <div class="icon-wrap"><svg><use href="#i-chart"/></svg></div>
           <div class="num" style="font-size:20px;"><?php echo htmlspecialchars($analytics['top_concern']); ?></div>
-          <div class="lbl">Most discussed topic</div>
+          <div class="lbl">Most discussed topic ➜</div>
         </div>
-        <div class="card stat">
+        <div class="card stat clickable" onclick="location.href='appointments.php'" title="Click to view all appointments">
           <div class="icon-wrap"><svg><use href="#i-shield"/></svg></div>
           <div class="num" style="font-size:20px;"><?php echo $analytics['streak']; ?></div>
-          <div class="lbl">Consistency streak</div>
+          <div class="lbl">Consistency streak ➜</div>
         </div>
       </div>
 

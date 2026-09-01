@@ -17,7 +17,9 @@ $counselors = getAvailableCounselors();
 $stats = getAdminStatistics();
 
 $unread_count = count(getAdminNotifications($_SESSION['user_id'], true));
-$page_title = 'Reports — Admin Portal — GuideSched';
+$user_initials = strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : ''));
+
+$page_title = 'Reports — Admin Portal — GuideSched — Cagasat High School';
 $active_page = 'reports';
 $base_url_path = '../';
 ?>
@@ -49,9 +51,13 @@ $base_url_path = '../';
           <?php if ($unread_count > 0): ?><span class="bell-dot"></span><?php endif; ?>
           <span class="icon"><svg><use href="#i-bell"/></svg></span>
         </a>
-        <div class="avatar" style="background:var(--violet-700);">
-          <?php echo strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : '')); ?>
-        </div>
+        <a href="profile.php" class="topbar-user-badge" title="Click to view My Profile">
+          <div class="avatar" style="background:var(--violet-700);"><?php echo $user_initials; ?></div>
+          <div class="user-meta">
+            <span class="user-name"><?php echo htmlspecialchars($user['name']); ?></span>
+            <span class="user-role"><?php echo htmlspecialchars($user['specialization'] ?? ucfirst($_SESSION['role'])); ?></span>
+          </div>
+        </a>
       </div>
     </div>
 
@@ -70,6 +76,7 @@ $base_url_path = '../';
                 <option value="approved" <?php echo $status_filter === 'approved' ? 'selected' : ''; ?>>Approved</option>
                 <option value="completed" <?php echo $status_filter === 'completed' ? 'selected' : ''; ?>>Completed</option>
                 <option value="cancelled" <?php echo $status_filter === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                <option value="no_show" <?php echo $status_filter === 'no_show' ? 'selected' : ''; ?>>No-show</option>
               </select>
             </div>
             <div class="field">
@@ -109,15 +116,15 @@ $base_url_path = '../';
           <div class="lbl">Pending</div>
         </div>
         <div class="card stat">
-          <div class="num" style="color:var(--red);"><?php echo count(array_filter($appointments, fn($a) => $a['status'] === 'cancelled')); ?></div>
-          <div class="lbl">Cancelled</div>
+          <div class="num" style="color:var(--red);"><?php echo count(array_filter($appointments, fn($a) => $a['status'] === 'cancelled' || $a['status'] === 'no_show')); ?></div>
+          <div class="lbl">Cancelled / No-show</div>
         </div>
       </div>
 
       <!-- REPORT TABLE -->
       <div class="card">
         <div class="card-head">
-          <h3>Appointment Summary Report</h3>
+          <h3>Appointment Summary Report — Cagasat High School Guidance Office</h3>
         </div>
 
         <?php if (empty($appointments)): ?>
@@ -167,7 +174,7 @@ function exportToExcel() {
     }
     const csvFile = new Blob([csv.join("\n")], {type: "text/csv"});
     const downloadLink = document.createElement("a");
-    downloadLink.download = "guidesched_report.csv";
+    downloadLink.download = "cagasat_guidance_report.csv";
     downloadLink.href = window.URL.createObjectURL(csvFile);
     downloadLink.style.display = "none";
     document.body.appendChild(downloadLink);
