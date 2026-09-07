@@ -193,11 +193,11 @@ $base_url_path = '../';
             </a>
           </div>
           <div class="week-grid">
-            <div class="h"></div><div class="h">Mon</div><div class="h">Tue</div><div class="h">Wed</div><div class="h">Thu</div><div class="h">Fri</div><div class="h">Sat</div>
-            <div class="time-lbl">9 AM</div><div class="cell booked">Booked</div><div class="cell avail">Open</div><div class="cell avail">Open</div><div class="cell booked">Booked</div><div class="cell avail">Open</div><div class="cell blocked">—</div>
-            <div class="time-lbl">10 AM</div><div class="cell booked">Booked</div><div class="cell booked">Booked</div><div class="cell avail">Open</div><div class="cell avail">Open</div><div class="cell avail">Open</div><div class="cell blocked">—</div>
-            <div class="time-lbl">1 PM</div><div class="cell avail">Open</div><div class="cell avail">Open</div><div class="cell blocked">—</div><div class="cell booked">Booked</div><div class="cell avail">Open</div><div class="cell blocked">—</div>
-            <div class="time-lbl">2 PM</div><div class="cell avail">Open</div><div class="cell blocked">—</div><div class="cell avail">Open</div><div class="cell avail">Open</div><div class="cell blocked">—</div><div class="cell blocked">—</div>
+            <div class="h"></div><div class="h">Mon</div><div class="h">Tue</div><div class="h">Wed</div><div class="h">Thu</div><div class="h">Fri</div>
+            <div class="time-lbl">9 AM</div><div class="cell booked">Booked</div><div class="cell avail">Open</div><div class="cell avail">Open</div><div class="cell booked">Booked</div><div class="cell avail">Open</div>
+            <div class="time-lbl">10 AM</div><div class="cell booked">Booked</div><div class="cell booked">Booked</div><div class="cell avail">Open</div><div class="cell avail">Open</div><div class="cell avail">Open</div>
+            <div class="time-lbl">1 PM</div><div class="cell avail">Open</div><div class="cell avail">Open</div><div class="cell blocked">—</div><div class="cell booked">Booked</div><div class="cell avail">Open</div>
+            <div class="time-lbl">2 PM</div><div class="cell avail">Open</div><div class="cell blocked">—</div><div class="cell avail">Open</div><div class="cell avail">Open</div><div class="cell blocked">—</div>
           </div>
         </div>
       </div>
