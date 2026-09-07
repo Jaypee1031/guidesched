@@ -4,7 +4,7 @@ require_once '../includes/auth_functions.php';
 require_once '../includes/appointment_functions.php';
 require_once '../includes/admin_functions.php';
 
-requireRole('admin');
+requireAnyRole(['counselor', 'admin']);
 
 $user = getUserProfile($_SESSION['user_id']);
 $error = '';

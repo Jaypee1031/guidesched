@@ -46,14 +46,22 @@ function isLoggedIn() {
     return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
 }
 
-// Helper function to get current user role
+// Helper function to get current user role (Simplified 2-Role System: student & counselor)
 function getUserRole() {
-    return isset($_SESSION['role']) ? $_SESSION['role'] : null;
+    $role = isset($_SESSION['role']) ? $_SESSION['role'] : null;
+    if ($role === 'admin') {
+        return 'counselor';
+    }
+    return $role;
 }
 
 // Helper function to check if user has specific role
 function hasRole($role) {
-    return getUserRole() === $role;
+    $current = getUserRole();
+    if ($role === 'counselor' && ($current === 'counselor' || $current === 'admin')) {
+        return true;
+    }
+    return $current === $role;
 }
 
 // Helper function to require login
@@ -74,7 +82,8 @@ function requireRole($role) {
 // Helper function to require any of specified roles
 function requireAnyRole($roles) {
     requireLogin();
-    if (!in_array(getUserRole(), $roles)) {
+    $currentRole = getUserRole();
+    if (!in_array($currentRole, $roles) && !($currentRole === 'counselor' && in_array('admin', $roles))) {
         redirect('dashboard.php');
     }
 }

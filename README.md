@@ -5,7 +5,14 @@
 [![Chart.js](https://img.shields.io/badge/Analytics-Chart.js-FF6384?style=flat-square&logo=chartdotjs&logoColor=white)](https://chartjs.org)
 [![License](https://img.shields.io/badge/License-Educational-6D28D9?style=flat-square)](#license)
 
-**GuideSched** is a modern, responsive web application designed for high school guidance counseling offices (**Cagasat High School**). It simplifies appointment booking for students, streamlines schedule management for guidance counselors, and provides analytics dashboards for guidance administrators.
+**GuideSched** is a modern, responsive web application designed for high school guidance counseling offices (**Cagasat High School**). It features a streamlined **2-User Role System (Student and Guidance Counselor)** to simplify appointment booking, schedule management, student profiles, and multi-year analytics reporting.
+
+---
+
+## 👥 Unified 2-User Role System
+
+1. **Student**: Book appointments, track upcoming & past sessions, view personal insights, and receive real-time notifications.
+2. **Guidance Counselor**: Manage student appointments, set office hours & time slot availability, review student profiles, manage counselor team access, generate multi-year Chart.js analytics, and export CSV reports.
 
 ---
 
@@ -29,11 +36,11 @@ The system features a custom, modern violet design system built with custom CSS,
 - **My Insights (Analytics)**: Visual metrics for total sessions attended, top concern topic, consistency streak, and a Chart.js monthly session bar graph.
 - **Student Profile**: Update personal and academic details with selectable grade levels (Grade 7–10, Grade 11–12 STEM/ABM/HUMSS/TVL), view overall appointment summary, and change password securely.
 
-### 🏛️ Admin & Counselor Portal (`/admin/`)
-- **Admin Dashboard**: Real-time interactive stat cards (Today's appointments, Pending approvals, Weekly sessions, No-show rate), today's schedule agenda, and quick 1-click Approve / Decline action buttons.
+### 🏛️ Counselor Portal (`/admin/`)
+- **Counselor Dashboard**: Real-time interactive stat cards (Today's appointments, Pending approvals, Weekly sessions, No-show rate), today's schedule agenda, and quick 1-click Approve / Decline action buttons.
 - **Appointment Management**: Tabbed view (*Pending*, *Approved*, *Time Slots*) with status indicators and quick response actions.
 - **Schedule Management**: Create custom availability slots, manage counselor working hours, and view weekly grid overview (`.week-grid`).
-- **Analytics & Data Insights**: Key metrics and 3 Chart.js graphs:
+- **Analytics & Data Insights**: Key metrics, multi-year filters (2024, 2025, 2026, All Time), and 3 Chart.js graphs:
   1. **Appointment Trends**: Monthly bar chart
   2. **Common Concerns**: Topic distribution doughnut chart
   3. **Status Breakdown**: Horizontal stacked status bar chart
@@ -55,13 +62,12 @@ The system features a custom, modern violet design system built with custom CSS,
 
 ## 🔑 Default Login Credentials
 
-After importing the database, you can log in with these default accounts:
+After importing the database, log in with these default accounts:
 
-| Role | Email | Password | Access Portal |
+| User Role | Email | Password | Access Portal |
 | :--- | :--- | :--- | :--- |
-| **Administrator** | `admin@guidesched.com` | `admin123` | Admin Portal (`/admin/dashboard.php`) |
-| **Counselor** | `maria.santos@guidesched.com` | `counselor123` | Counselor Portal (`/admin/dashboard.php`) |
-| **Student** | *(Register via Sign Up)* | *(Set during registration)* | Student Portal (`/student/dashboard.php`) |
+| **Guidance Counselor** | `maria.santos@guidesched.com` | `counselor123` | Counselor Portal (`/admin/dashboard.php`) |
+| **Student** | `juan.santos@cagasaths.edu.ph` | `student123` | Student Portal (`/student/dashboard.php`) |
 
 ---
 
@@ -86,7 +92,6 @@ After importing the database, you can log in with these default accounts:
    - Open phpMyAdmin at [`http://localhost/phpmyadmin`](http://localhost/phpmyadmin).
    - Create a database named `guidesched`.
    - Click **Import** and select `database/guidesched_full.sql` from the project folder, then click **Go**.
-   - *(Or simply visit [`http://localhost/APPOINTMENT%20IN%20GUIDANCE/setup_database.php`](http://localhost/APPOINTMENT%20IN%20GUIDANCE/setup_database.php) in your browser)*.
 
 4. **Launch Application**:
    - **Landing Page**: [`http://localhost/APPOINTMENT%20IN%20GUIDANCE/`](http://localhost/APPOINTMENT%20IN%20GUIDANCE/)

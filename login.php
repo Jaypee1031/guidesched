@@ -6,7 +6,7 @@ if (isLoggedIn()) {
     $role = getUserRole();
     if ($role === 'student') {
         redirect('student/dashboard.php');
-    } elseif ($role === 'counselor' || $role === 'admin') {
+    } else {
         redirect('admin/dashboard.php');
     }
 }
@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($result['success']) {
                 if ($result['role'] === 'student') {
                     redirect('student/dashboard.php');
-                } elseif ($result['role'] === 'counselor' || $result['role'] === 'admin') {
+                } else {
                     redirect('admin/dashboard.php');
                 }
             } else {
@@ -64,7 +64,7 @@ $base_url_path = '';
       </div>
     </div>
     <h2>Welcome back</h2>
-    <div class="auth-sub">Log in to continue to your account</div>
+    <div class="auth-sub">Log in to Student or Counselor Portal</div>
 
     <?php if ($error): ?>
       <div class="alert-box alert-danger"><?php echo htmlspecialchars($error); ?></div>
@@ -91,7 +91,7 @@ $base_url_path = '';
     </form>
 
     <div class="foot-note">
-      Don't have an account? <a href="register.php" class="link-btn">Sign up</a>
+      Don't have a Student account? <a href="register.php" class="link-btn">Sign up</a>
     </div>
   </div>
 </div>
