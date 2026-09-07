@@ -465,5 +465,83 @@ function getAdminAnalyticsData($year_filter = 'all', $counselor_filter = null, $
         'monthly_details' => $monthly_details
     ];
 }
+
+// Delete student account and associated data
+function deleteStudentAccount($student_id) {
+    $conn = getDBConnection();
+    
+    // Verify user is a student
+    $stmt = $conn->prepare("SELECT id, name FROM users WHERE id = ? AND role = 'student'");
+    $stmt->bind_param("i", $student_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($res->num_rows === 0) {
+        closeDBConnection($conn);
+        return ['success' => false, 'message' => 'Student account not found.'];
+    }
+    
+    $student = $res->fetch_assoc();
+    
+    // Delete notifications, appointments, student_profiles, and user record
+    $conn->query("DELETE FROM notifications WHERE user_id = $student_id");
+    $conn->query("DELETE FROM appointments WHERE student_id = $student_id");
+    $conn->query("DELETE FROM student_profiles WHERE user_id = $student_id");
+    $stmt = $conn->prepare("DELETE FROM users WHERE id = ? AND role = 'student'");
+    $stmt->bind_param("i", $student_id);
+    $success = $stmt->execute();
+    
+    closeDBConnection($conn);
+    if ($success) {
+        return ['success' => true, 'message' => 'Student account for "' . htmlspecialchars($student['name']) . '" deleted successfully.'];
+    }
+    return ['success' => false, 'message' => 'Failed to delete student account.'];
+}
+
+// Toggle student active/inactive status
+function toggleStudentStatus($student_id) {
+    $conn = getDBConnection();
+    
+    $stmt = $conn->prepare("SELECT id, name, status FROM users WHERE id = ? AND role = 'student'");
+    $stmt->bind_param("i", $student_id);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($res->num_rows === 0) {
+        closeDBConnection($conn);
+        return ['success' => false, 'message' => 'Student account not found.'];
+    }
+    
+    $student = $res->fetch_assoc();
+    $new_status = ($student['status'] === 'active') ? 'inactive' : 'active';
+    
+    $stmt = $conn->prepare("UPDATE users SET status = ? WHERE id = ? AND role = 'student'");
+    $stmt->bind_param("si", $new_status, $student_id);
+    $success = $stmt->execute();
+    
+    closeDBConnection($conn);
+    if ($success) {
+        return ['success' => true, 'message' => 'Student account status updated to ' . $new_status . '.'];
+    }
+    return ['success' => false, 'message' => 'Failed to update student account status.'];
+}
+
+// Admin update student profile
+function adminUpdateStudentProfile($student_id, $data) {
+    $conn = getDBConnection();
+    
+    $stmt = $conn->prepare("UPDATE users SET name = ?, email = ? WHERE id = ? AND role = 'student'");
+    $stmt->bind_param("ssi", $data['name'], $data['email'], $student_id);
+    
+    if ($stmt->execute()) {
+        $stmt = $conn->prepare("UPDATE student_profiles SET student_number = ?, course = ?, year_level = ?, contact_number = ? WHERE user_id = ?");
+        $stmt->bind_param("sisii", $data['student_number'], $data['course'], $data['year_level'], $data['contact_number'], $student_id);
+        $stmt->execute();
+        
+        closeDBConnection($conn);
+        return ['success' => true, 'message' => 'Student profile updated successfully.'];
+    }
+    
+    closeDBConnection($conn);
+    return ['success' => false, 'message' => 'Failed to update student profile.'];
+}
 ?>
 

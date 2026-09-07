@@ -10,6 +10,71 @@ $user = getUserProfile($_SESSION['user_id']);
 $search = isset($_GET['search']) ? sanitizeInput($_GET['search']) : '';
 $grade_filter = isset($_GET['grade']) ? sanitizeInput($_GET['grade']) : '';
 
+$error = '';
+$success = '';
+
+// Handle actions: delete, toggle_status, add_student, edit_student
+if (isset($_GET['action']) && isset($_GET['id']) && is_numeric($_GET['id'])) {
+    $target_id = intval($_GET['id']);
+    $action = sanitizeInput($_GET['action']);
+    
+    if ($action === 'delete') {
+        $res = deleteStudentAccount($target_id);
+        if ($res['success']) { $success = $res['message']; } else { $error = $res['message']; }
+    } elseif ($action === 'toggle_status') {
+        $res = toggleStudentStatus($target_id);
+        if ($res['success']) { $success = $res['message']; } else { $error = $res['message']; }
+    }
+}
+
+// Handle Add Student form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_student'])) {
+    $dept_grade = sanitizeInput($_POST['course']);
+    $year_lvl = 7;
+    if (strpos($dept_grade, 'Grade 8') !== false) { $year_lvl = 8; }
+    elseif (strpos($dept_grade, 'Grade 9') !== false) { $year_lvl = 9; }
+    elseif (strpos($dept_grade, 'Grade 10') !== false) { $year_lvl = 10; }
+    elseif (strpos($dept_grade, 'Grade 11') !== false) { $year_lvl = 11; }
+    elseif (strpos($dept_grade, 'Grade 12') !== false) { $year_lvl = 12; }
+
+    $data = [
+        'name' => sanitizeInput($_POST['name']),
+        'email' => sanitizeInput($_POST['email']),
+        'password' => $_POST['password'],
+        'student_number' => sanitizeInput($_POST['student_number']),
+        'course' => $dept_grade,
+        'year_level' => $year_lvl,
+        'contact_number' => sanitizeInput($_POST['contact_number'])
+    ];
+    
+    $res = registerStudent($data);
+    if ($res['success']) { $success = 'Student account created successfully!'; } else { $error = $res['message']; }
+}
+
+// Handle Edit Student form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['edit_student'])) {
+    $edit_id = intval($_POST['student_id']);
+    $dept_grade = sanitizeInput($_POST['course']);
+    $year_lvl = 7;
+    if (strpos($dept_grade, 'Grade 8') !== false) { $year_lvl = 8; }
+    elseif (strpos($dept_grade, 'Grade 9') !== false) { $year_lvl = 9; }
+    elseif (strpos($dept_grade, 'Grade 10') !== false) { $year_lvl = 10; }
+    elseif (strpos($dept_grade, 'Grade 11') !== false) { $year_lvl = 11; }
+    elseif (strpos($dept_grade, 'Grade 12') !== false) { $year_lvl = 12; }
+
+    $data = [
+        'name' => sanitizeInput($_POST['name']),
+        'email' => sanitizeInput($_POST['email']),
+        'student_number' => sanitizeInput($_POST['student_number']),
+        'course' => $dept_grade,
+        'year_level' => $year_lvl,
+        'contact_number' => sanitizeInput($_POST['contact_number'])
+    ];
+    
+    $res = adminUpdateStudentProfile($edit_id, $data);
+    if ($res['success']) { $success = $res['message']; } else { $error = $res['message']; }
+}
+
 $students = getAllStudents($search);
 
 // Filter by grade level if selected
@@ -36,7 +101,7 @@ if ($selected_student_id) {
 $unread_count = count(getAdminNotifications($_SESSION['user_id'], true));
 $user_initials = strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : ''));
 
-$page_title = 'Students — Admin Portal — GuideSched — Cagasat High School';
+$page_title = 'Students — Counselor Portal — GuideSched — Cagasat High School';
 $active_page = 'students';
 $base_url_path = '../';
 ?>
@@ -44,6 +109,26 @@ $base_url_path = '../';
 <html lang="en">
 <head>
     <?php include '../includes/head.php'; ?>
+    <style>
+      .btn-danger-sm {
+        background: var(--red-bg);
+        color: var(--red);
+        border: 1px solid rgba(192, 57, 43, 0.2);
+        padding: 4px 8px;
+        font-size: 11.5px;
+        border-radius: 6px;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .btn-danger-sm:hover {
+        background: var(--red);
+        color: #fff;
+      }
+    </style>
 </head>
 <body>
 
@@ -57,9 +142,12 @@ $base_url_path = '../';
     <div class="topbar">
       <div>
         <h1>Student Management</h1>
-        <div class="sub">View student profiles and guidance appointment history</div>
+        <div class="sub">View student profiles, edit details, toggle status, or remove accounts</div>
       </div>
       <div class="topbar-right">
+        <button class="btn btn-primary" onclick="openAddStudentModal()">
+          <span class="icon"><svg><use href="#i-plus"/></svg></span>Add New Student
+        </button>
         <a href="notifications.php" class="bell-btn" title="Notifications">
           <?php if ($unread_count > 0): ?><span class="bell-dot"></span><?php endif; ?>
           <span class="icon"><svg width="18" height="18"><use href="#i-bell"/></svg></span>
@@ -69,6 +157,14 @@ $base_url_path = '../';
 
     <!-- CONTENT BODY -->
     <div class="content">
+      <?php if ($error): ?>
+        <div class="alert-box alert-danger"><?php echo htmlspecialchars($error); ?></div>
+      <?php endif; ?>
+
+      <?php if ($success): ?>
+        <div class="alert-box alert-success"><?php echo htmlspecialchars($success); ?></div>
+      <?php endif; ?>
+
       <!-- SEARCH & FILTER CARD -->
       <div class="card" style="margin-bottom:16px;">
         <form method="GET" action="" style="display:flex; gap:12px; flex-wrap:wrap;">
@@ -107,11 +203,13 @@ $base_url_path = '../';
                   <th>LRN / Student ID</th>
                   <th>Department & Grade</th>
                   <th>Status</th>
-                  <th>Action</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <?php foreach ($students as $s): ?>
+                <?php foreach ($students as $s): 
+                  $s_json = htmlspecialchars(json_encode($s), ENT_QUOTES, 'UTF-8');
+                ?>
                   <tr>
                     <td>
                       <div class="name-cell">
@@ -124,9 +222,23 @@ $base_url_path = '../';
                     </td>
                     <td><?php echo htmlspecialchars($s['student_number']); ?></td>
                     <td><span class="tag"><?php echo htmlspecialchars($s['course'] ?? 'General Student'); ?></span></td>
-                    <td><span class="pill confirmed"><?php echo ucfirst($s['status']); ?></span></td>
                     <td>
-                      <a href="students.php?student_id=<?php echo $s['id']; ?><?php echo $search ? '&search=' . urlencode($search) : ''; ?>" class="btn btn-ghost btn-sm">View Profile</a>
+                      <a href="students.php?action=toggle_status&id=<?php echo $s['id']; ?><?php echo $search ? '&search=' . urlencode($search) : ''; ?>" class="pill <?php echo $s['status'] === 'active' ? 'confirmed' : 'pending'; ?>" title="Click to toggle active/inactive status">
+                        <?php echo ucfirst($s['status']); ?>
+                      </a>
+                    </td>
+                    <td>
+                      <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                        <a href="students.php?student_id=<?php echo $s['id']; ?><?php echo $search ? '&search=' . urlencode($search) : ''; ?>" class="btn btn-ghost btn-sm">History</a>
+                        
+                        <button onclick="openEditStudentModal(<?php echo $s_json; ?>)" class="btn btn-outline btn-sm" title="Edit Student Information">
+                          Edit
+                        </button>
+                        
+                        <a href="students.php?action=delete&id=<?php echo $s['id']; ?><?php echo $search ? '&search=' . urlencode($search) : ''; ?>" class="btn-danger-sm" onclick="return confirm('Are you sure you want to permanently remove/delete student account for <?php echo addslashes(htmlspecialchars($s['name'])); ?>? This will delete all their appointment history and notifications.')" title="Permanently remove student account">
+                          Remove
+                        </a>
+                      </div>
                     </td>
                   </tr>
                 <?php endforeach; ?>
@@ -139,15 +251,20 @@ $base_url_path = '../';
         <?php if ($selected_student_id && $selected_student): ?>
           <div class="card">
             <div class="card-head">
-              <h3>Student Profile Overview</h3>
+              <h3>Student Profile & History</h3>
               <a href="students.php<?php echo $search ? '?search=' . urlencode($search) : ''; ?>" class="link-btn">Close</a>
             </div>
 
-            <div style="display:flex; align-items:center; gap:14px; margin-bottom:18px;">
-              <div class="avatar" style="width:52px;height:52px;font-size:18px;"><?php echo strtoupper(substr($selected_student['name'], 0, 2)); ?></div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+              <div style="display:flex; align-items:center; gap:14px;">
+                <div class="avatar" style="width:52px;height:52px;font-size:18px;"><?php echo strtoupper(substr($selected_student['name'], 0, 2)); ?></div>
+                <div>
+                  <h4 style="font-size:16px;"><?php echo htmlspecialchars($selected_student['name']); ?></h4>
+                  <div style="color:var(--muted); font-size:12.5px;"><?php echo htmlspecialchars($selected_student['email']); ?></div>
+                </div>
+              </div>
               <div>
-                <h4 style="font-size:16px;"><?php echo htmlspecialchars($selected_student['name']); ?></h4>
-                <div style="color:var(--muted); font-size:12.5px;"><?php echo htmlspecialchars($selected_student['email']); ?></div>
+                <a href="students.php?action=delete&id=<?php echo $selected_student['id']; ?>" class="btn-danger-sm" onclick="return confirm('Delete account?')">Remove Account</a>
               </div>
             </div>
 
@@ -182,6 +299,134 @@ $base_url_path = '../';
     </div>
   </div>
 </div>
+
+<!-- ADD NEW STUDENT MODAL -->
+<div id="addStudentModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(33,27,54,0.6); z-index:99999; align-items:center; justify-content:center; padding:16px;">
+  <div style="background:#fff; border-radius:16px; max-width:480px; width:100%; padding:24px; box-shadow:0 20px 40px rgba(0,0,0,0.25); position:relative;">
+    <button onclick="closeAddStudentModal()" style="position:absolute; top:16px; right:16px; background:none; border:none; font-size:22px; font-weight:700; color:#726C87; cursor:pointer;">&times;</button>
+    <h3 style="font-size:18px; color:var(--violet-950); margin-bottom:16px;">Add New Student Account</h3>
+    
+    <form method="POST" action="">
+      <input type="hidden" name="add_student" value="1">
+      <div class="field" style="margin-bottom:12px;">
+        <label>Student Full Name</label>
+        <input type="text" name="name" placeholder="e.g. Juan Dela Cruz" required style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--line);">
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <label>Email Address</label>
+        <input type="email" name="email" placeholder="student@cagasaths.edu.ph" required style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--line);">
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <label>Initial Password</label>
+        <input type="password" name="password" placeholder="••••••••" required style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--line);">
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <label>LRN / Student ID Number</label>
+        <input type="text" name="student_number" placeholder="1029384756" required style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--line);">
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <label>Department & Grade / Strand</label>
+        <select name="course" required style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--line);">
+          <option value="Grade 7 (Junior High)">Grade 7 (Junior High)</option>
+          <option value="Grade 8 (Junior High)">Grade 8 (Junior High)</option>
+          <option value="Grade 9 (Junior High)">Grade 9 (Junior High)</option>
+          <option value="Grade 10 (Junior High)">Grade 10 (Junior High)</option>
+          <option value="Grade 11 - STEM">Grade 11 - STEM</option>
+          <option value="Grade 11 - ABM">Grade 11 - ABM</option>
+          <option value="Grade 11 - HUMSS">Grade 11 - HUMSS</option>
+          <option value="Grade 11 - TVL">Grade 11 - TVL</option>
+          <option value="Grade 12 - STEM">Grade 12 - STEM</option>
+          <option value="Grade 12 - ABM">Grade 12 - ABM</option>
+          <option value="Grade 12 - HUMSS">Grade 12 - HUMSS</option>
+          <option value="Grade 12 - TVL">Grade 12 - TVL</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:18px;">
+        <label>Contact Number</label>
+        <input type="text" name="contact_number" placeholder="09171234567" required style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--line);">
+      </div>
+      
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" onclick="closeAddStudentModal()" class="btn btn-ghost">Cancel</button>
+        <button type="submit" class="btn btn-primary">Create Student Account</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- EDIT STUDENT MODAL -->
+<div id="editStudentModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(33,27,54,0.6); z-index:99999; align-items:center; justify-content:center; padding:16px;">
+  <div style="background:#fff; border-radius:16px; max-width:480px; width:100%; padding:24px; box-shadow:0 20px 40px rgba(0,0,0,0.25); position:relative;">
+    <button onclick="closeEditStudentModal()" style="position:absolute; top:16px; right:16px; background:none; border:none; font-size:22px; font-weight:700; color:#726C87; cursor:pointer;">&times;</button>
+    <h3 style="font-size:18px; color:var(--violet-950); margin-bottom:16px;">Edit Student Information</h3>
+    
+    <form method="POST" action="">
+      <input type="hidden" name="edit_student" value="1">
+      <input type="hidden" name="student_id" id="edit_student_id">
+      
+      <div class="field" style="margin-bottom:12px;">
+        <label>Student Full Name</label>
+        <input type="text" name="name" id="edit_name" required style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--line);">
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <label>Email Address</label>
+        <input type="email" name="email" id="edit_email" required style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--line);">
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <label>LRN / Student ID Number</label>
+        <input type="text" name="student_number" id="edit_student_number" required style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--line);">
+      </div>
+      <div class="field" style="margin-bottom:12px;">
+        <label>Department & Grade / Strand</label>
+        <select name="course" id="edit_course" required style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--line);">
+          <option value="Grade 7 (Junior High)">Grade 7 (Junior High)</option>
+          <option value="Grade 8 (Junior High)">Grade 8 (Junior High)</option>
+          <option value="Grade 9 (Junior High)">Grade 9 (Junior High)</option>
+          <option value="Grade 10 (Junior High)">Grade 10 (Junior High)</option>
+          <option value="Grade 11 - STEM">Grade 11 - STEM</option>
+          <option value="Grade 11 - ABM">Grade 11 - ABM</option>
+          <option value="Grade 11 - HUMSS">Grade 11 - HUMSS</option>
+          <option value="Grade 11 - TVL">Grade 11 - TVL</option>
+          <option value="Grade 12 - STEM">Grade 12 - STEM</option>
+          <option value="Grade 12 - ABM">Grade 12 - ABM</option>
+          <option value="Grade 12 - HUMSS">Grade 12 - HUMSS</option>
+          <option value="Grade 12 - TVL">Grade 12 - TVL</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:18px;">
+        <label>Contact Number</label>
+        <input type="text" name="contact_number" id="edit_contact_number" required style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid var(--line);">
+      </div>
+      
+      <div style="display:flex; justify-content:flex-end; gap:10px;">
+        <button type="button" onclick="closeEditStudentModal()" class="btn btn-ghost">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openAddStudentModal() {
+  document.getElementById('addStudentModal').style.display = 'flex';
+}
+function closeAddStudentModal() {
+  document.getElementById('addStudentModal').style.display = 'none';
+}
+
+function openEditStudentModal(data) {
+  document.getElementById('edit_student_id').value = data.id || '';
+  document.getElementById('edit_name').value = data.name || '';
+  document.getElementById('edit_email').value = data.email || '';
+  document.getElementById('edit_student_number').value = data.student_number || '';
+  document.getElementById('edit_course').value = data.course || 'Grade 7 (Junior High)';
+  document.getElementById('edit_contact_number').value = data.contact_number || '';
+  document.getElementById('editStudentModal').style.display = 'flex';
+}
+function closeEditStudentModal() {
+  document.getElementById('editStudentModal').style.display = 'none';
+}
+</script>
 
 </body>
 </html>
