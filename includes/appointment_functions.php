@@ -185,19 +185,24 @@ function bookAppointment($student_id, $counselor_id, $date, $start_time, $end_ti
 }
 
 
-// Get student notifications
+// Get notifications for student with appointment and counselor details
 function getStudentNotifications($student_id, $unread_only = false) {
     $conn = getDBConnection();
     
-    $query = "SELECT id, appointment_id, message, type, is_read, created_at 
-              FROM notifications 
-              WHERE user_id = ?";
+    $query = "SELECT n.id, n.appointment_id, n.message, n.type, n.is_read, n.created_at,
+                     a.appointment_date, a.start_time, a.end_time, a.concern, a.status as appointment_status, a.admin_notes,
+                     coun.name as counselor_name, cp.specialization as counselor_specialization
+              FROM notifications n
+              LEFT JOIN appointments a ON n.appointment_id = a.id
+              LEFT JOIN users coun ON a.counselor_id = coun.id
+              LEFT JOIN counselor_profiles cp ON coun.id = cp.user_id
+              WHERE n.user_id = ?";
     
     if ($unread_only) {
-        $query .= " AND is_read = FALSE";
+        $query .= " AND n.is_read = FALSE";
     }
     
-    $query .= " ORDER BY created_at DESC";
+    $query .= " ORDER BY n.created_at DESC";
     
     $stmt = $conn->prepare($query);
     $stmt->bind_param("i", $student_id);

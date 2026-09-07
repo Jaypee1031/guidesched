@@ -10,6 +10,11 @@ $user = getUserProfile($_SESSION['user_id']);
 
 if (isset($_GET['mark_read']) && is_numeric($_GET['mark_read'])) {
     markNotificationAsRead(intval($_GET['mark_read']), $_SESSION['user_id']);
+    if (isset($_GET['ajax'])) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true]);
+        exit();
+    }
     redirect('admin/notifications.php');
 }
 
@@ -27,7 +32,7 @@ $unread_count = count($unread_notifications);
 
 $user_initials = strtoupper(substr($user['name'], 0, 1) . (strpos($user['name'], ' ') ? substr(explode(' ', $user['name'])[1], 0, 1) : ''));
 
-$page_title = 'Notifications — Admin Portal — GuideSched — Cagasat High School';
+$page_title = 'Notifications — Counselor Portal — GuideSched — Cagasat High School';
 $active_page = 'notifications';
 $base_url_path = '../';
 ?>
@@ -35,6 +40,15 @@ $base_url_path = '../';
 <html lang="en">
 <head>
     <?php include '../includes/head.php'; ?>
+    <style>
+      .notif-item {
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+      .notif-item:hover {
+        background: var(--violet-50);
+      }
+    </style>
 </head>
 <body>
 
@@ -61,29 +75,29 @@ $base_url_path = '../';
     <div class="content">
       <div class="card">
         <?php if (empty($all_notifications)): ?>
-          <div class="empty-note">No admin notifications found.</div>
+          <div class="empty-note">No notifications found.</div>
         <?php else: ?>
-          <?php foreach ($all_notifications as $notif): 
+          <?php foreach ($all_notifications as $index => $notif): 
             $icon_class = 'violet';
             $icon_name = '#i-bell';
             if ($notif['type'] === 'approved') { $icon_class = 'green'; $icon_name = '#i-check'; }
             elseif ($notif['type'] === 'declined') { $icon_class = 'red'; $icon_name = '#i-x'; }
             elseif ($notif['type'] === 'rescheduled') { $icon_class = 'amber'; $icon_name = '#i-refresh'; }
             elseif ($notif['type'] === 'reminder') { $icon_class = 'violet'; $icon_name = '#i-clock'; }
+
+            $json_data = htmlspecialchars(json_encode($notif), ENT_QUOTES, 'UTF-8');
           ?>
-            <div class="notif-item <?php echo !$notif['is_read'] ? 'unread' : ''; ?>">
-              <div class="unread-dot" style="<?php echo $notif['is_read'] ? 'visibility:hidden' : ''; ?>"></div>
+            <div class="notif-item <?php echo !$notif['is_read'] ? 'unread' : ''; ?>" id="notif-row-<?php echo $notif['id']; ?>" onclick="openNotifModal(<?php echo $json_data; ?>)">
+              <div class="unread-dot" id="dot-<?php echo $notif['id']; ?>" style="<?php echo $notif['is_read'] ? 'visibility:hidden' : ''; ?>"></div>
               <div class="notif-icon <?php echo $icon_class; ?>">
                 <svg width="18" height="18"><use href="<?php echo $icon_name; ?>"/></svg>
               </div>
               <div style="flex:1;">
-                <div class="n-title"><?php echo ucfirst($notif['type']); ?></div>
+                <div class="n-title"><?php echo ucfirst($notif['type']); ?> — <?php echo htmlspecialchars($notif['student_name'] ?? 'Student'); ?></div>
                 <div class="n-sub"><?php echo htmlspecialchars($notif['message']); ?></div>
-                <?php if (!$notif['is_read']): ?>
-                  <div style="margin-top:6px;">
-                    <a href="notifications.php?mark_read=<?php echo $notif['id']; ?>" class="link-btn" style="font-size:11.5px;">Mark as read</a>
-                  </div>
-                <?php endif; ?>
+                <div style="margin-top:4px; font-size:11.5px; color:var(--violet-600); font-weight:600;">
+                  Click to inspect full details ➜
+                </div>
               </div>
               <div class="n-time"><?php echo formatDate($notif['created_at'], 'M j, g:i A'); ?></div>
             </div>
@@ -93,6 +107,142 @@ $base_url_path = '../';
     </div>
   </div>
 </div>
+
+<!-- RICH NOTIFICATION DETAILS MODAL -->
+<div id="notifModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(33,27,54,0.6); z-index:99999; align-items:center; justify-content:center; padding:16px;">
+  <div style="background:#fff; border-radius:16px; max-width:520px; width:100%; padding:24px; box-shadow:0 20px 40px rgba(0,0,0,0.25); position:relative;">
+    <button onclick="closeNotifModal()" style="position:absolute; top:16px; right:16px; background:none; border:none; font-size:22px; font-weight:700; color:#726C87; cursor:pointer;">&times;</button>
+    
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+      <div id="modalIconWrap" style="width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center;">
+        <svg width="22" height="22"><use id="modalIcon" href="#i-bell"/></svg>
+      </div>
+      <div>
+        <h3 id="modalTitle" style="font-size:18px; color:var(--violet-950); margin:0;">Notification Details</h3>
+        <div id="modalTime" style="font-size:12px; color:var(--muted);"></div>
+      </div>
+    </div>
+
+    <div style="background:var(--violet-50); border-radius:12px; padding:14px; margin-bottom:16px; font-size:13.5px; color:var(--ink); line-height:1.5;" id="modalMessage">
+    </div>
+
+    <div style="border-top:1px solid var(--line); padding-top:14px; margin-bottom:16px;">
+      <h4 style="font-size:13px; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); margin-bottom:10px;">Appointment & Student Information</h4>
+      <table style="width:100%; font-size:13px; border-collapse:collapse;">
+        <tr>
+          <td style="padding:4px 0; color:var(--muted); width:130px;">Student Name:</td>
+          <td style="padding:4px 0; font-weight:700; color:var(--ink);" id="modalStudentName">N/A</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 0; color:var(--muted);">Student ID / LRN:</td>
+          <td style="padding:4px 0; font-weight:600;" id="modalStudentId">N/A</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 0; color:var(--muted);">Grade / Strand:</td>
+          <td style="padding:4px 0; font-weight:600;" id="modalStudentCourse">N/A</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 0; color:var(--muted);">Appointment Date:</td>
+          <td style="padding:4px 0; font-weight:600; color:var(--violet-700);" id="modalAptDate">N/A</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 0; color:var(--muted);">Time Slot:</td>
+          <td style="padding:4px 0; font-weight:600;" id="modalAptTime">N/A</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 0; color:var(--muted);">Concern Category:</td>
+          <td style="padding:4px 0;" id="modalAptConcern"><span class="tag">N/A</span></td>
+        </tr>
+        <tr>
+          <td style="padding:4px 0; color:var(--muted);">Current Status:</td>
+          <td style="padding:4px 0;" id="modalAptStatus"><span class="pill pending">Pending</span></td>
+        </tr>
+        <tr>
+          <td style="padding:4px 0; color:var(--muted);">Assigned Counselor:</td>
+          <td style="padding:4px 0; font-weight:600;" id="modalCounselorName">N/A</td>
+        </tr>
+      </table>
+    </div>
+
+    <div style="display:flex; gap:10px; justify-content:flex-end;">
+      <a id="modalActionApprove" href="#" class="btn btn-primary btn-sm" style="display:none;">Approve Appointment</a>
+      <a href="appointments.php" class="btn btn-outline btn-sm">Go to Appointments Calendar</a>
+      <button onclick="closeNotifModal()" class="btn btn-ghost btn-sm">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openNotifModal(data) {
+  // Mark as read asynchronously
+  if (!data.is_read) {
+    fetch(`notifications.php?mark_read=${data.id}&ajax=1`)
+      .then(() => {
+        const dot = document.getElementById(`dot-${data.id}`);
+        if (dot) dot.style.visibility = 'hidden';
+        const row = document.getElementById(`notif-row-${data.id}`);
+        if (row) row.classList.remove('unread');
+      }).catch(err => console.error(err));
+  }
+
+  // Set modal details
+  document.getElementById('modalTitle').innerText = (data.type ? data.type.charAt(0).toUpperCase() + data.type.slice(1) : 'Alert') + ' Notification';
+  document.getElementById('modalTime').innerText = data.created_at || '';
+  document.getElementById('modalMessage').innerText = data.message || '';
+
+  document.getElementById('modalStudentName').innerText = data.student_name || 'Student';
+  document.getElementById('modalStudentId').innerText = data.student_number || data.student_id || 'N/A';
+  document.getElementById('modalStudentCourse').innerText = data.student_course || 'Cagasat HS Student';
+  
+  if (data.appointment_date) {
+    document.getElementById('modalAptDate').innerText = data.appointment_date;
+    document.getElementById('modalAptTime').innerText = (data.start_time || '') + ' - ' + (data.end_time || '');
+  } else {
+    document.getElementById('modalAptDate').innerText = 'N/A';
+    document.getElementById('modalAptTime').innerText = 'N/A';
+  }
+
+  document.getElementById('modalAptConcern').innerHTML = `<span class="tag">${data.concern || 'General Guidance'}</span>`;
+  
+  const status = data.appointment_status || 'pending';
+  let statusClass = 'pending';
+  if (status === 'approved' || status === 'completed') statusClass = 'confirmed';
+  if (status === 'cancelled' || status === 'declined' || status === 'no_show') statusClass = 'cancelled';
+  document.getElementById('modalAptStatus').innerHTML = `<span class="pill ${statusClass}">${status.toUpperCase()}</span>`;
+
+  document.getElementById('modalCounselorName').innerText = data.counselor_name || 'Guidance Office';
+
+  const approveBtn = document.getElementById('modalActionApprove');
+  if (data.appointment_id && status === 'pending') {
+    approveBtn.href = `appointments.php?action=approve&id=${data.appointment_id}`;
+    approveBtn.style.display = 'inline-flex';
+  } else {
+    approveBtn.style.display = 'none';
+  }
+
+  const modalIconWrap = document.getElementById('modalIconWrap');
+  const modalIcon = document.getElementById('modalIcon');
+  if (data.type === 'approved') {
+    modalIconWrap.style.background = 'var(--green-bg)';
+    modalIconWrap.style.color = 'var(--green)';
+    modalIcon.setAttribute('href', '#i-check');
+  } else if (data.type === 'declined') {
+    modalIconWrap.style.background = 'var(--red-bg)';
+    modalIconWrap.style.color = 'var(--red)';
+    modalIcon.setAttribute('href', '#i-x');
+  } else {
+    modalIconWrap.style.background = 'var(--violet-100)';
+    modalIconWrap.style.color = 'var(--violet-700)';
+    modalIcon.setAttribute('href', '#i-bell');
+  }
+
+  document.getElementById('notifModal').style.display = 'flex';
+}
+
+function closeNotifModal() {
+  document.getElementById('notifModal').style.display = 'none';
+}
+</script>
 
 </body>
 </html>
