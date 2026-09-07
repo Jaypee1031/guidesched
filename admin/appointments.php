@@ -187,17 +187,61 @@ $base_url_path = '../';
       <div id="ad-slots" class="tabpane" style="display: <?php echo $active_tab === 'slots' ? 'block' : 'none'; ?>;">
         <div class="card">
           <div class="card-head">
-            <h3>Weekly Availability Grid</h3>
+            <div>
+              <h3 style="margin:0;">Weekly Availability Grid</h3>
+              <div style="font-size:12px; color:var(--muted); margin-top:2px;">Guidance Office Regular Hours · Weekdays Only (Mon – Fri)</div>
+            </div>
             <a href="schedule.php" class="btn btn-ghost btn-sm">
               <span class="icon"><svg><use href="#i-edit"/></svg></span>Edit Availability
             </a>
           </div>
-          <div class="week-grid">
-            <div class="h"></div><div class="h">Mon</div><div class="h">Tue</div><div class="h">Wed</div><div class="h">Thu</div><div class="h">Fri</div>
-            <div class="time-lbl">9 AM</div><div class="cell booked">Booked</div><div class="cell avail">Open</div><div class="cell avail">Open</div><div class="cell booked">Booked</div><div class="cell avail">Open</div>
-            <div class="time-lbl">10 AM</div><div class="cell booked">Booked</div><div class="cell booked">Booked</div><div class="cell avail">Open</div><div class="cell avail">Open</div><div class="cell avail">Open</div>
-            <div class="time-lbl">1 PM</div><div class="cell avail">Open</div><div class="cell avail">Open</div><div class="cell blocked">—</div><div class="cell booked">Booked</div><div class="cell avail">Open</div>
-            <div class="time-lbl">2 PM</div><div class="cell avail">Open</div><div class="cell blocked">—</div><div class="cell avail">Open</div><div class="cell avail">Open</div><div class="cell blocked">—</div>
+          <div style="overflow-x:auto;">
+            <table class="grid-table" style="width:100%; border-collapse:separate; border-spacing:6px; margin-top:10px;">
+              <thead>
+                <tr>
+                  <th style="width:75px; font-size:11px; font-weight:700; color:var(--faint); padding:6px 0; text-align:center;">Time</th>
+                  <th style="font-size:11px; font-weight:700; color:var(--faint); padding:6px 0; text-align:center;">Mon</th>
+                  <th style="font-size:11px; font-weight:700; color:var(--faint); padding:6px 0; text-align:center;">Tue</th>
+                  <th style="font-size:11px; font-weight:700; color:var(--faint); padding:6px 0; text-align:center;">Wed</th>
+                  <th style="font-size:11px; font-weight:700; color:var(--faint); padding:6px 0; text-align:center;">Thu</th>
+                  <th style="font-size:11px; font-weight:700; color:var(--faint); padding:6px 0; text-align:center;">Fri</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td style="font-size:11px; color:var(--faint); font-weight:600; text-align:center; padding:8px 0;">9 AM</td>
+                  <td><div class="cell booked">Booked</div></td>
+                  <td><div class="cell avail">Open</div></td>
+                  <td><div class="cell avail">Open</div></td>
+                  <td><div class="cell booked">Booked</div></td>
+                  <td><div class="cell avail">Open</div></td>
+                </tr>
+                <tr>
+                  <td style="font-size:11px; color:var(--faint); font-weight:600; text-align:center; padding:8px 0;">10 AM</td>
+                  <td><div class="cell booked">Booked</div></td>
+                  <td><div class="cell booked">Booked</div></td>
+                  <td><div class="cell avail">Open</div></td>
+                  <td><div class="cell avail">Open</div></td>
+                  <td><div class="cell avail">Open</div></td>
+                </tr>
+                <tr>
+                  <td style="font-size:11px; color:var(--faint); font-weight:600; text-align:center; padding:8px 0;">1 PM</td>
+                  <td><div class="cell avail">Open</div></td>
+                  <td><div class="cell avail">Open</div></td>
+                  <td><div class="cell blocked">—</div></td>
+                  <td><div class="cell booked">Booked</div></td>
+                  <td><div class="cell avail">Open</div></td>
+                </tr>
+                <tr>
+                  <td style="font-size:11px; color:var(--faint); font-weight:600; text-align:center; padding:8px 0;">2 PM</td>
+                  <td><div class="cell avail">Open</div></td>
+                  <td><div class="cell blocked">—</div></td>
+                  <td><div class="cell avail">Open</div></td>
+                  <td><div class="cell avail">Open</div></td>
+                  <td><div class="cell blocked">—</div></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

@@ -160,9 +160,15 @@ $base_url_path = '../';
                 </select>
               </div>
 
+              <?php
+              $defDate = date('Y-m-d', strtotime('+1 day'));
+              if (date('N', strtotime($defDate)) >= 6) {
+                  $defDate = date('Y-m-d', strtotime('next Monday'));
+              }
+              ?>
               <div class="field" style="margin-bottom:14px;">
-                <label>Select Date</label>
-                <input type="date" name="date" id="date_input" min="<?php echo date('Y-m-d'); ?>" value="<?php echo date('Y-m-d', strtotime('+1 day')); ?>" onchange="loadTimeSlots()" required>
+                <label>Select Date (Weekdays Only: Mon – Fri)</label>
+                <input type="date" name="date" id="date_input" min="<?php echo date('Y-m-d'); ?>" value="<?php echo $defDate; ?>" onchange="loadTimeSlots()" required>
               </div>
 
               <label style="display:block; font-size:12px; font-weight:700; color:var(--muted); margin-bottom:8px;">Available Time Slots (Click to Select)</label>
@@ -277,6 +283,14 @@ function loadTimeSlots(){
 
   if(!counselorId || !date){
     container.innerHTML = '<div style="grid-column:span 4;color:var(--faint);font-size:12px;">Select counselor and date</div>';
+    return;
+  }
+
+  const dObj = new Date(date + 'T00:00:00');
+  const dayOfWeek = dObj.getDay();
+  if (dayOfWeek === 0 || dayOfWeek === 6) {
+    container.innerHTML = '<div style="grid-column:span 4;color:#92400E;font-size:12px;font-weight:600;padding:10px;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;">⚠️ Guidance Office is open Weekdays Only (Mon – Fri). Please choose a weekday.</div>';
+    note.textContent = 'Please select a Monday to Friday date.';
     return;
   }
 

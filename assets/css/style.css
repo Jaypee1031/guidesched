@@ -504,14 +504,14 @@ tr:last-child td { border-bottom: none; }
 .slot.taken { background: #F3F1F7; color: var(--faint); text-decoration: line-through; border-style: dashed; cursor: not-allowed; }
 .slot.selected { background: var(--violet-600); color: #fff; border-color: var(--violet-600); }
 
-/* Weekly Availability Grid */
+/* Weekly Availability Grid & Table */
 .week-grid { display: grid; grid-template-columns: 70px repeat(5, 1fr); gap: 6px; }
 .week-grid .h { font-size: 11px; font-weight: 700; color: var(--faint); text-align: center; padding: 6px 0; }
-.week-grid .cell { border-radius: 8px; padding: 8px 4px; text-align: center; font-size: 11px; font-weight: 700; }
-.week-grid .cell.avail { background: var(--green-bg); color: var(--green); }
-.week-grid .cell.booked { background: var(--violet-100); color: var(--violet-700); }
-.week-grid .cell.blocked { background: #F3F1F7; color: var(--faint); }
-.week-grid .time-lbl { font-size: 11px; color: var(--faint); font-weight: 600; padding: 8px 0; }
+.week-grid .cell, .grid-table .cell { border-radius: 8px; padding: 8px 4px; text-align: center; font-size: 11px; font-weight: 700; width: 100%; display: block; box-sizing: border-box; }
+.week-grid .cell.avail, .grid-table .cell.avail { background: var(--green-bg); color: var(--green); }
+.week-grid .cell.booked, .grid-table .cell.booked { background: var(--violet-100); color: var(--violet-700); }
+.week-grid .cell.blocked, .grid-table .cell.blocked { background: #F3F1F7; color: var(--faint); }
+.week-grid .time-lbl, .grid-table .time-lbl { font-size: 11px; color: var(--faint); font-weight: 600; padding: 8px 0; }
 
 .tag {
   font-size: 11px;

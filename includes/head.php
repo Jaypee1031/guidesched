@@ -23,4 +23,4 @@ if (typeof Chart === 'undefined') {
 }
 </script>
 <script src="<?php echo $baseUrl; ?>assets/js/pwa-install.js"></script>
-<link rel="stylesheet" href="<?php echo $baseUrl; ?>assets/css/style.css">
+<link rel="stylesheet" href="<?php echo $baseUrl; ?>assets/css/style.css?v=<?php echo filemtime(__DIR__ . '/../assets/css/style.css'); ?>">
