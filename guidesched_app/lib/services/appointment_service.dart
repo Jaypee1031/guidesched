@@ -124,4 +124,24 @@ class AppointmentService {
       );
     }
   }
+
+  Future<void> updateNotes({
+    required int appointmentId,
+    required String adminNotes,
+    required int changedBy,
+  }) async {
+    try {
+      await _api.post('appointments.php', {
+        'id': appointmentId,
+        'action': 'update_notes',
+        'changed_by': changedBy,
+        'admin_notes': adminNotes,
+      });
+    } catch (_) {
+      await _mock.updateAppointmentNotes(
+        appointmentId: appointmentId,
+        adminNotes: adminNotes,
+      );
+    }
+  }
 }

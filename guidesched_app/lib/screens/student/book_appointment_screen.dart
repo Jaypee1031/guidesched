@@ -5,6 +5,7 @@ import '../../models/availability_slot_model.dart';
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/appointment_provider.dart';
+import '../../services/sound_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/time_slot_chip.dart';
 
@@ -217,6 +218,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
     setState(() => _isSubmitting = false);
 
     if (success && mounted) {
+      SoundService.playSuccessChime();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Appointment booked successfully! Pending counselor confirmation.'),
@@ -225,6 +227,7 @@ class _BookAppointmentScreenState extends State<BookAppointmentScreen> {
       );
       widget.onBookingSuccess();
     } else if (mounted) {
+      SoundService.playAlertSound();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(aptProvider.errorMessage ?? 'Failed to book appointment'),

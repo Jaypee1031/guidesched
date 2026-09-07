@@ -162,6 +162,9 @@ if ($method === 'GET') {
         jsonError('appointment_id and action are required', 422);
     }
 
+    // Check if updating notes only
+    $isNotesUpdate = ($action === 'update_notes' || $action === 'notes');
+
     // Map actions to status
     $statusMap = [
         'approve' => 'approved',
@@ -174,7 +177,7 @@ if ($method === 'GET') {
 
     $newStatus = $statusMap[$action] ?? $action;
     $allowedStatuses = ['pending', 'approved', 'declined', 'rescheduled', 'completed', 'cancelled', 'no_show'];
-    if (!in_array($newStatus, $allowedStatuses)) {
+    if (!$isNotesUpdate && !in_array($newStatus, $allowedStatuses)) {
         jsonError('Invalid status action: ' . $action, 400);
     }
 
@@ -192,6 +195,29 @@ if ($method === 'GET') {
 
     $conn->begin_transaction();
     try {
+        if ($isNotesUpdate) {
+            $upd = $conn->prepare("UPDATE appointments SET admin_notes = ? WHERE id = ?");
+            $upd->bind_param("si", $adminNotes, $appointmentId);
+            $upd->execute();
+
+            // Add history record
+            $h = $conn->prepare("INSERT INTO appointment_history (appointment_id, action, old_status, new_status, changed_by) VALUES (?, 'notes_updated', ?, ?, ?)");
+            $h->bind_param("issi", $appointmentId, $oldStatus, $oldStatus, $changedBy);
+            $h->execute();
+
+            // Notify student about counselor remarks/notes
+            if (!empty($adminNotes)) {
+                $notifMsg = "Counselor remarks updated for your session on " . date('M j, Y', strtotime($apt['appointment_date'])) . ": " . $adminNotes;
+                $n = $conn->prepare("INSERT INTO notifications (user_id, appointment_id, message, type) VALUES (?, ?, ?, 'info')");
+                $n->bind_param("iiss", $apt['student_id'], $appointmentId, $notifMsg);
+                $n->execute();
+            }
+
+            $conn->commit();
+            closeApiDBConnection($conn);
+            jsonSuccess(['appointment_id' => $appointmentId, 'admin_notes' => $adminNotes, 'status' => $oldStatus], 'Counselor notes saved successfully');
+        }
+
         if (!empty($adminNotes)) {
             $upd = $conn->prepare("UPDATE appointments SET status = ?, admin_notes = ? WHERE id = ?");
             $upd->bind_param("ssi", $newStatus, $adminNotes, $appointmentId);

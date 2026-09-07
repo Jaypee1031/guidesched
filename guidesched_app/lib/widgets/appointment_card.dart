@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/appointment_model.dart';
+import '../screens/common/appointment_slip_screen.dart';
+import '../services/sound_service.dart';
 import '../theme/app_theme.dart';
 import 'status_badge.dart';
 
@@ -11,6 +13,7 @@ class AppointmentCard extends StatelessWidget {
   final VoidCallback? onComplete;
   final VoidCallback? onCancel;
   final VoidCallback? onDetails;
+  final VoidCallback? onEditNotes;
 
   const AppointmentCard({
     super.key,
@@ -21,6 +24,7 @@ class AppointmentCard extends StatelessWidget {
     this.onComplete,
     this.onCancel,
     this.onDetails,
+    this.onEditNotes,
   });
 
   @override
@@ -187,44 +191,146 @@ class AppointmentCard extends StatelessWidget {
               ),
             ],
 
+            // Counselor Notes Section
             if (appointment.adminNotes != null && appointment.adminNotes!.isNotEmpty) ...[
               const SizedBox(height: 10),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
                   color: Colors.amber.shade50,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: Colors.amber.shade200),
                 ),
-                child: Row(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.notes_rounded, size: 14, color: Colors.amber.shade800),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        'Counselor Note: ${appointment.adminNotes}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.amber.shade900,
-                          fontStyle: FontStyle.italic,
+                    Row(
+                      children: [
+                        Icon(Icons.notes_rounded, size: 15, color: Colors.amber.shade900),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Counselor Remarks:',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.amber.shade900,
+                          ),
                         ),
+                        const Spacer(),
+                        if (isCounselorView && onEditNotes != null)
+                          InkWell(
+                            onTap: () {
+                              SoundService.playActionFeedback();
+                              onEditNotes!();
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.edit_outlined, size: 13, color: Colors.amber.shade900),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    'Edit',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.amber.shade900,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      appointment.adminNotes!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.amber.shade900,
                       ),
                     ),
                   ],
                 ),
               ),
+            ] else if (isCounselorView && onEditNotes != null) ...[
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  onPressed: () {
+                    SoundService.playActionFeedback();
+                    onEditNotes!();
+                  },
+                  icon: const Icon(Icons.add_comment_outlined, size: 14, color: AppTheme.primary),
+                  label: const Text('Add Counselor Note', style: TextStyle(fontSize: 11.5, color: AppTheme.primary)),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+              ),
             ],
 
-            // Action Buttons
+            const SizedBox(height: 12),
+
+            // Secondary Quick Actions (View Slip)
+            Row(
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () {
+                    SoundService.playActionFeedback();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AppointmentSlipScreen(appointment: appointment),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.description_outlined, size: 14, color: AppTheme.primary),
+                  label: const Text(
+                    'Official Pass / Slip',
+                    style: TextStyle(fontSize: 11.5, color: AppTheme.primary, fontWeight: FontWeight.bold),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: AppTheme.primary.withValues(alpha: 0.5)),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+                const Spacer(),
+                if (!isCounselorView && appointment.isPending && onCancel != null)
+                  TextButton.icon(
+                    onPressed: () {
+                      SoundService.playAlertSound();
+                      onCancel!();
+                    },
+                    icon: const Icon(Icons.cancel_outlined, size: 14, color: AppTheme.statusCancelled),
+                    label: const Text('Cancel Booking', style: TextStyle(color: AppTheme.statusCancelled, fontSize: 11.5)),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+              ],
+            ),
+
+            // Main Primary Action Buttons
             if (isCounselorView && appointment.isPending) ...[
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: onDecline,
+                      onPressed: () {
+                        SoundService.playAlertSound();
+                        onDecline?.call();
+                      },
                       icon: const Icon(Icons.close, size: 16, color: AppTheme.statusCancelled),
                       label: const Text('Decline', style: TextStyle(color: AppTheme.statusCancelled)),
                       style: OutlinedButton.styleFrom(
@@ -236,7 +342,10 @@ class AppointmentCard extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: onApprove,
+                      onPressed: () {
+                        SoundService.playSuccessChime();
+                        onApprove?.call();
+                      },
                       icon: const Icon(Icons.check, size: 16),
                       label: const Text('Approve'),
                       style: ElevatedButton.styleFrom(
@@ -248,12 +357,15 @@ class AppointmentCard extends StatelessWidget {
                 ],
               ),
             ] else if (isCounselorView && appointment.isApproved) ...[
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: onComplete,
+                      onPressed: () {
+                        SoundService.playSuccessChime();
+                        onComplete?.call();
+                      },
                       icon: const Icon(Icons.done_all, size: 16),
                       label: const Text('Mark Complete'),
                       style: ElevatedButton.styleFrom(
@@ -263,17 +375,6 @@ class AppointmentCard extends StatelessWidget {
                     ),
                   ),
                 ],
-              ),
-            ] else if (!isCounselorView && appointment.isPending && onCancel != null) ...[
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  onPressed: onCancel,
-                  icon: const Icon(Icons.cancel_outlined, size: 15, color: AppTheme.statusCancelled),
-                  label: const Text('Cancel Booking', style: TextStyle(color: AppTheme.statusCancelled, fontSize: 12.5)),
-                  style: TextButton.styleFrom(padding: EdgeInsets.zero),
-                ),
               ),
             ],
           ],

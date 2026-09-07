@@ -328,6 +328,47 @@ class MockDataService {
     }
   }
 
+  Future<void> updateAppointmentNotes({
+    required int appointmentId,
+    required String adminNotes,
+  }) async {
+    await Future.delayed(const Duration(milliseconds: 150));
+    final index = _appointments.indexWhere((a) => a.id == appointmentId);
+    if (index != -1) {
+      final old = _appointments[index];
+      _appointments[index] = AppointmentModel(
+        id: old.id,
+        studentId: old.studentId,
+        counselorId: old.counselorId,
+        appointmentDate: old.appointmentDate,
+        startTime: old.startTime,
+        endTime: old.endTime,
+        concern: old.concern,
+        status: old.status,
+        adminNotes: adminNotes,
+        createdAt: old.createdAt,
+        counselorName: old.counselorName,
+        counselorEmail: old.counselorEmail,
+        counselorSpecialization: old.counselorSpecialization,
+        studentName: old.studentName,
+        studentEmail: old.studentEmail,
+        studentNumber: old.studentNumber,
+        course: old.course,
+        yearLevel: old.yearLevel,
+      );
+
+      _notifications.insert(0, NotificationModel(
+        id: _notifications.length + 1,
+        userId: old.studentId,
+        appointmentId: old.id,
+        message: 'Counselor remarks updated for your session on ${old.formattedDate}: $adminNotes',
+        type: 'info',
+        isRead: false,
+        createdAt: DateTime.now().toIso8601String(),
+      ));
+    }
+  }
+
   // --- Notifications Mock ---
   Future<List<NotificationModel>> getNotifications(int userId) async {
     return _notifications.where((n) => n.userId == userId).toList();

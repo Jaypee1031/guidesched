@@ -100,7 +100,12 @@ The system uses an **Emerald & Forest Green Palette**, crafted specifically for 
   - Metrics for Total Sessions Attended, Current Streak, and Top Concern Topic.
   - Monthly session volume bar graph.
   - Concern distribution progress bars.
-- **Real-Time Notifications Feed**:
+- **Official Appointment & Consultation Pass**:
+  - One-tap access to **Official Guidance Pass / Slip** formatted for Cagasat National High School.
+  - Printable and downloadable as PDF directly in-browser.
+  - Features student details, reference code (`#GS-CNHS-XXXXX`), schedule timestamps, counselor remarks, dual signature lines, and official DepEd / RA 9258 confidentiality notices.
+- **Real-Time Notifications & Sound Effects**:
+  - In-app chime and haptic feedback on booking confirmation, status updates, and session completion.
   - Instant alerts when appointments are approved, declined, or rescheduled.
   - Unread badge counters and "Mark all as read" capability.
 - **Student Profile**:
@@ -114,10 +119,17 @@ The system uses an **Emerald & Forest Green Palette**, crafted specifically for 
   - 4 interactive statistic cards: *Today's Appointments, Pending Requests, Approved Sessions, and No-Show Rate*.
   - **Today's Agenda**: Schedule of student consultations for the current day.
   - **Quick Action Approvals**: 1-click **Approve** or **Decline** with custom counselor notes sent to the student.
-- **Appointment Management**:
+- **Appointment Management & Filter Chips**:
   - Tabbed overview: *Pending*, *Approved*, and *All Sessions*.
+  - **Quick Status Filter Chips**: Filter sessions seamlessly by `All`, `Approved`, `Completed`, `Pending`, and `Cancelled`.
   - Search by student name, LRN, or concern details.
   - Mark sessions as **Completed** or **No Show**.
+- **Clinical & Guidance Notes Editor**:
+  - Open a dedicated notes dialog on any session anytime (not just at approval).
+  - Pre-populated quick guidance templates (*Follow-up scheduled, Academic consultation completed, Teacher referral advised*).
+  - Saves directly to the MySQL database and notifies the student immediately.
+- **Official Guidance Pass Generator**:
+  - View and print official consultation passes for students to excuse classroom attendance.
 - **Schedule Management**:
   - Date selector to view counselor schedule.
   - Create custom availability time slots.
@@ -349,7 +361,7 @@ The REST API allows the Flutter app to communicate with the XAMPP PHP backend. A
 | `api/availability.php` | `POST` | `counselor_id`, `date`, `start_time`, `end_time`, `status` | Adds or updates an availability slot. |
 | `api/appointments.php` | `GET` | `user_id`, `role`, `status` (*optional*) | Returns appointment records joined with counselor and student profiles. |
 | `api/appointments.php` | `POST` | `action=book`, `student_id`, `counselor_id`, `appointment_date`, `start_time`, `end_time`, `mode`, `concern_category`, `details` | Creates an appointment, notifies counselor, and logs audit trail. |
-| `api/appointments.php` | `PUT` / `POST` | `id`, `action` (*approve / decline / complete / cancel / noshow*), `changed_by`, `admin_notes` | Updates appointment status and alerts student. |
+| `api/appointments.php` | `PUT` / `POST` | `id`, `action` (*approve / decline / complete / cancel / noshow / update_notes*), `changed_by`, `admin_notes` | Updates appointment status or modifies counselor clinical notes, notifying student. |
 | `api/notifications.php` | `GET` | `user_id` | Returns notification list and unread count. |
 | `api/notifications.php` | `POST` | `user_id`, `notification_id` or `mark_all=true` | Marks notifications as read. |
 | `api/analytics.php` | `GET` | `user_id`, `role`, `year` | Returns session volume charts and concern category distributions. |
@@ -357,11 +369,11 @@ The REST API allows the Flutter app to communicate with the XAMPP PHP backend. A
 
 ---
 
-## 🚀 How to Run the Application
+## 🚀 How to Run & Build the Application
 
-### Option 1: 1-Click Standalone App Window on PC (Fastest)
+### Option 1: 1-Click Standalone Desktop Window (Instant, No SDKs needed)
 
-Launch GuideSched in a dedicated **mobile application window** (isolated phone dimensions, no address bar, no browser tabs):
+Launch GuideSched in a dedicated **desktop mobile app frame** (isolated phone dimensions, no address bar, no browser tabs):
 1. Navigate to the project root folder:
    `c:\xampp\htdocs\APPOINTMENT IN GUIDANCE APP`
 2. **Double-click** [`Launch_GuideSched_App.bat`](file:///c:/xampp/htdocs/APPOINTMENT%20IN%20GUIDANCE%20APP/Launch_GuideSched_App.bat).
@@ -369,9 +381,66 @@ Launch GuideSched in a dedicated **mobile application window** (isolated phone d
 
 ---
 
-### Option 2: Run via Flutter CLI
+### Option 2: Build an Installable Android APK (`.apk` for Phones)
 
-Ensure Flutter is added to your current terminal session:
+You can compile a standalone release `.apk` file that installs directly onto any Android phone or tablet:
+
+#### 1-Click Script:
+Simply double-click **[`Build_Android_APK.bat`](file:///c:/xampp/htdocs/APPOINTMENT%20IN%20GUIDANCE%20APP/Build_Android_APK.bat)** in the root folder.
+- Automatically checks for Java (JDK 17) and Android SDK.
+- Offers automatic installation of missing tools via `winget`.
+- Compiles `dist/GuideSched_v1.0.apk` and opens the output folder.
+
+#### Manual Terminal Commands:
+```powershell
+# 1. Install Java JDK 17 (if not present)
+winget install Microsoft.OpenJDK.17
+
+# 2. Install Android Studio (for Android SDK)
+winget install Google.AndroidStudio
+# Launch Android Studio once to complete SDK setup, then ensure "Android SDK Command-line Tools" is installed
+
+# 3. Configure Android SDK in Flutter
+flutter config --android-sdk "$env:LOCALAPPDATA\Android\Sdk"
+flutter doctor --android-licenses
+
+# 4. Compile Release APK
+cd "c:\xampp\htdocs\APPOINTMENT IN GUIDANCE APP\guidesched_app"
+flutter build apk --release
+# Generated APK: build/app/outputs/flutter-apk/app-release.apk
+```
+
+---
+
+### Option 3: Compile Native Windows Desktop Executable (`.exe`)
+
+You can compile a high-performance native Windows executable (`guidesched_app.exe`):
+
+#### 1-Click Script:
+Double-click **[`Build_Windows_App.bat`](file:///c:/xampp/htdocs/APPOINTMENT%20IN%20GUIDANCE%20APP/Build_Windows_App.bat)** in the root folder.
+- Verifies Windows Developer Mode (opens Settings if needed).
+- Verifies Visual Studio 2022 C++ build tools.
+- Compiles `dist/windows_app/guidesched_app.exe`.
+
+#### Manual Terminal Commands:
+```powershell
+# 1. Enable Windows 11 Developer Mode
+start ms-settings:developers   # Toggle "Developer Mode" to ON
+
+# 2. Install Visual Studio 2022 with C++ Workload
+winget install Microsoft.VisualStudio.2022.Community --override "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --passive"
+
+# 3. Compile Native Windows Executable
+cd "c:\xampp\htdocs\APPOINTMENT IN GUIDANCE APP\guidesched_app"
+flutter build windows --release
+# Generated EXE: build/windows/x64/runner/Release/guidesched_app.exe
+```
+
+---
+
+### Option 4: Run via Flutter CLI (Development)
+
+Ensure Flutter is in your active PowerShell session:
 ```powershell
 $env:Path += ";C:\flutter\bin"
 cd "c:\xampp\htdocs\APPOINTMENT IN GUIDANCE APP\guidesched_app"
@@ -379,25 +448,13 @@ cd "c:\xampp\htdocs\APPOINTMENT IN GUIDANCE APP\guidesched_app"
 # Fetch packages
 flutter pub get
 
-# Run on Google Chrome
+# Run in Chrome or Edge
 flutter run -d chrome
-
-# Run on Microsoft Edge
 flutter run -d edge
+
+# Run on connected Android device via USB
+flutter run -d android
 ```
-
----
-
-### Option 3: Run on Android Phone or Emulator
-
-1. Enable **Developer Options** and **USB Debugging** on your Android phone and plug it in via USB.
-2. Run:
-   ```powershell
-   $env:Path += ";C:\flutter\bin"
-   cd "c:\xampp\htdocs\APPOINTMENT IN GUIDANCE APP\guidesched_app"
-   flutter run
-   ```
-   Flutter will compile the native code and install the **GuideSched** application directly onto your phone screen.
 
 ---
 

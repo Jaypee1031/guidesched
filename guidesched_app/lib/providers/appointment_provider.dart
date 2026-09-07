@@ -183,4 +183,55 @@ class AppointmentProvider extends ChangeNotifier {
       return false;
     }
   }
+
+  Future<bool> updateCounselorNotes({
+    required int appointmentId,
+    required String notes,
+    required int changedBy,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      await _service.updateNotes(
+        appointmentId: appointmentId,
+        adminNotes: notes,
+        changedBy: changedBy,
+      );
+
+      final idx = _appointments.indexWhere((a) => a.id == appointmentId);
+      if (idx != -1) {
+        final cur = _appointments[idx];
+        _appointments[idx] = AppointmentModel(
+          id: cur.id,
+          studentId: cur.studentId,
+          counselorId: cur.counselorId,
+          appointmentDate: cur.appointmentDate,
+          startTime: cur.startTime,
+          endTime: cur.endTime,
+          concern: cur.concern,
+          status: cur.status,
+          adminNotes: notes,
+          createdAt: cur.createdAt,
+          counselorName: cur.counselorName,
+          counselorEmail: cur.counselorEmail,
+          counselorSpecialization: cur.counselorSpecialization,
+          studentName: cur.studentName,
+          studentEmail: cur.studentEmail,
+          studentNumber: cur.studentNumber,
+          course: cur.course,
+          yearLevel: cur.yearLevel,
+        );
+      }
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
 }
