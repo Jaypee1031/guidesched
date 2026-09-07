@@ -65,22 +65,27 @@ button { font-family: inherit; cursor: pointer; }
   flex-shrink: 0;
   background: var(--white);
   border-right: 1px solid var(--line);
-  padding: 24px 16px;
+  padding: 16px 12px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
 }
 
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 4px 10px 22px;
+  padding: 4px 8px 12px;
 }
 
 .brand-mark {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 10px;
   background: var(--violet-600);
   display: flex;
@@ -89,20 +94,20 @@ button { font-family: inherit; cursor: pointer; }
   color: #fff;
   font-family: 'Sora', sans-serif;
   font-weight: 700;
-  font-size: 15px;
+  font-size: 14.5px;
   flex-shrink: 0;
 }
 
 .brand-text .name {
   font-family: 'Sora', sans-serif;
   font-weight: 700;
-  font-size: 16.5px;
+  font-size: 15.5px;
   color: var(--violet-950);
   line-height: 1.1;
 }
 
 .brand-text .portal {
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--faint);
   font-weight: 600;
   letter-spacing: .03em;
@@ -111,11 +116,11 @@ button { font-family: inherit; cursor: pointer; }
 .navlink {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: 10px;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 9px;
   color: var(--muted);
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 600;
   border: none;
   background: transparent;
@@ -133,12 +138,12 @@ button { font-family: inherit; cursor: pointer; }
 
 .sidebar-foot {
   margin-top: auto;
-  padding-top: 16px;
+  padding-top: 10px;
   border-top: 1px solid var(--line);
 }
 
 .logout-link {
-  margin-top: 6px;
+  margin-top: 2px;
   color: var(--red);
 }
 
@@ -150,8 +155,8 @@ button { font-family: inherit; cursor: pointer; }
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 8px 10px;
-  border-radius: 10px;
+  padding: 6px 8px;
+  border-radius: 9px;
   width: 100%;
   border: none;
   background: transparent;
