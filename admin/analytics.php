@@ -9,9 +9,10 @@ requireAnyRole(['admin', 'counselor']);
 $user = getUserProfile($_SESSION['user_id']);
 $selected_year = isset($_GET['year']) ? sanitizeInput($_GET['year']) : '2026';
 $selected_counselor = (isset($_GET['counselor']) && is_numeric($_GET['counselor'])) ? intval($_GET['counselor']) : null;
+$selected_concern = isset($_GET['concern']) ? sanitizeInput($_GET['concern']) : 'all';
 
 $counselors = getAvailableCounselors();
-$analytics = getAdminAnalyticsData($selected_year, $selected_counselor);
+$analytics = getAdminAnalyticsData($selected_year, $selected_counselor, $selected_concern);
 
 $total_completed = ($analytics['status_counts']['completed'] ?? 0) + ($analytics['status_counts']['no_show'] ?? 0);
 $no_show_count = $analytics['status_counts']['no_show'] ?? 0;
@@ -66,6 +67,16 @@ $base_url_path = '../';
             <?php foreach ($counselors as $c): ?>
               <option value="<?php echo $c['id']; ?>" <?php echo $selected_counselor == $c['id'] ? 'selected' : ''; ?>><?php echo htmlspecialchars($c['name']); ?></option>
             <?php endforeach; ?>
+          </select>
+
+          <select name="concern" onchange="this.form.submit()" title="Select Concern Category" style="padding:6px 12px; border-radius:8px; border:1px solid var(--line); font-size:12.5px; font-weight:600; color:var(--violet-950); background:#fff; cursor:pointer;">
+            <option value="all" <?php echo $selected_concern === 'all' ? 'selected' : ''; ?>>All Concern Topics</option>
+            <option value="Academic Stress" <?php echo $selected_concern === 'Academic Stress' ? 'selected' : ''; ?>>Academic Stress</option>
+            <option value="Personal Counseling" <?php echo $selected_concern === 'Personal Counseling' ? 'selected' : ''; ?>>Personal Counseling</option>
+            <option value="Family Concerns" <?php echo $selected_concern === 'Family Concerns' ? 'selected' : ''; ?>>Family Concerns</option>
+            <option value="Peer Relationships" <?php echo $selected_concern === 'Peer Relationships' ? 'selected' : ''; ?>>Peer Relationships</option>
+            <option value="Anxiety & Wellness" <?php echo $selected_concern === 'Anxiety & Wellness' ? 'selected' : ''; ?>>Anxiety & Wellness</option>
+            <option value="Career & Strand Guidance" <?php echo $selected_concern === 'Career & Strand Guidance' ? 'selected' : ''; ?>>Career & Strand Guidance</option>
           </select>
         </form>
 
@@ -126,7 +137,7 @@ $base_url_path = '../';
         <!-- 1. BAR CHART: MONTHLY TRENDS -->
         <div class="card">
           <div class="card-head">
-            <h3>Appointment Trends (<?php echo $selected_year === 'all' ? '2024–2026' : $selected_year; ?>)</h3>
+            <h3>Appointment Trends (<?php echo $selected_year === 'all' ? '2024–2026' : $selected_year; ?><?php echo $selected_concern !== 'all' ? ' — ' . htmlspecialchars($selected_concern) : ''; ?>)</h3>
             <span style="font-size:11.5px; color:var(--muted);">Click any bar to filter records</span>
           </div>
           <canvas id="adminTrend" height="170" style="cursor:pointer;"></canvas>
@@ -145,7 +156,7 @@ $base_url_path = '../';
       <!-- 3. STACKED HORIZONTAL BAR CHART: STATUS BREAKDOWN -->
       <div class="card" style="margin-top:16px;">
         <div class="card-head">
-          <h3>Status Breakdown Summary</h3>
+          <h3>Status Breakdown Summary <?php echo $selected_concern !== 'all' ? '(' . htmlspecialchars($selected_concern) . ')' : ''; ?></h3>
           <span style="font-size:11.5px; color:var(--muted);">Click status segment to view detailed logs</span>
         </div>
         <canvas id="adminStatus" height="70" style="cursor:pointer;"></canvas>
@@ -335,6 +346,7 @@ document.addEventListener('DOMContentLoaded', function(){
 // CSV Export function for Analytics Data
 function exportAnalyticsCSV() {
   const year = "<?php echo $selected_year; ?>";
+  const concernFilter = "<?php echo addslashes($selected_concern); ?>";
   const total = "<?php echo $analytics['total_count']; ?>";
   const noShowRate = "<?php echo $no_show_rate; ?>";
   const topConcern = "<?php echo addslashes($analytics['top_concern']); ?>";
@@ -342,6 +354,7 @@ function exportAnalyticsCSV() {
   let csvContent = "data:text/csv;charset=utf-8,";
   csvContent += "GuideSched - Cagasat High School Guidance Office Analytics Report\n";
   csvContent += `Selected Year,${year}\n`;
+  csvContent += `Concern Category Filter,${concernFilter}\n`;
   csvContent += `Total Appointments,${total}\n`;
   csvContent += `No-Show Rate,${noShowRate}\n`;
   csvContent += `Top Concern Category,${topConcern}\n\n`;
@@ -359,7 +372,7 @@ function exportAnalyticsCSV() {
   const encodedUri = encodeURI(csvContent);
   const link = document.createElement("a");
   link.setAttribute("href", encodedUri);
-  link.setAttribute("download", `guidance_analytics_${year}.csv`);
+  link.setAttribute("download", `guidance_analytics_${year}_${concernFilter.replace(/\s+/g, '_')}.csv`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

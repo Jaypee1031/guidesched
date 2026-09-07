@@ -333,8 +333,8 @@ function getAdminNotifications($user_id, $unread_only = false) {
     return $notifications;
 }
 
-// Get detailed analytics data for admin with year and counselor filters
-function getAdminAnalyticsData($year_filter = 'all', $counselor_filter = null) {
+// Get detailed analytics data for admin with year, counselor, and concern filters
+function getAdminAnalyticsData($year_filter = 'all', $counselor_filter = null, $concern_filter = 'all') {
     $conn = getDBConnection();
     
     $appointments = getAllAppointments(null, $counselor_filter);
@@ -360,6 +360,28 @@ function getAdminAnalyticsData($year_filter = 'all', $counselor_filter = null) {
         if ($year_filter !== 'all' && $year_filter != $apt_year) {
             continue;
         }
+
+        $c = strtolower($apt['concern']);
+        $cat = 'Personal Counseling';
+        if (strpos($c, 'academic') !== false || strpos($c, 'study') !== false || strpos($c, 'exam') !== false) {
+            $cat = 'Academic Stress';
+        } elseif (strpos($c, 'anxiety') !== false || strpos($c, 'stress') !== false || strpos($c, 'wellness') !== false) {
+            $cat = 'Anxiety & Wellness';
+        } elseif (strpos($c, 'family') !== false || strpos($c, 'home') !== false) {
+            $cat = 'Family Concerns';
+        } elseif (strpos($c, 'peer') !== false || strpos($c, 'friend') !== false || strpos($c, 'relationship') !== false) {
+            $cat = 'Peer Relationships';
+        } elseif (strpos($c, 'career') !== false || strpos($c, 'strand') !== false) {
+            $cat = 'Career & Strand Guidance';
+        }
+
+        // Filter by concern topic if specified
+        if ($concern_filter !== 'all' && !empty($concern_filter)) {
+            if (strtolower($concern_filter) !== strtolower($cat) && strpos(strtolower($cat), strtolower($concern_filter)) === false && strpos(strtolower($apt['concern']), strtolower($concern_filter)) === false) {
+                continue;
+            }
+        }
+        
         $filtered_count++;
         
         $st = $apt['status'];
@@ -374,25 +396,11 @@ function getAdminAnalyticsData($year_filter = 'all', $counselor_filter = null) {
         }
         
         if (!isset($monthly_details[$m])) {
-            $monthly_details[$m] = ['month_name' => $m, 'month_num' => $m_num, 'year' => $apt_year, 'total' => 0, 'completed' => 0, 'top_concern' => 'Academic Stress', 'concerns' => []];
+            $monthly_details[$m] = ['month_name' => $m, 'month_num' => $m_num, 'year' => $apt_year, 'total' => 0, 'completed' => 0, 'top_concern' => $cat, 'concerns' => []];
         }
         $monthly_details[$m]['total']++;
         if ($st === 'completed') {
             $monthly_details[$m]['completed']++;
-        }
-        
-        $c = strtolower($apt['concern']);
-        $cat = 'Personal Counseling';
-        if (strpos($c, 'academic') !== false || strpos($c, 'study') !== false || strpos($c, 'exam') !== false) {
-            $cat = 'Academic Stress';
-        } elseif (strpos($c, 'anxiety') !== false || strpos($c, 'stress') !== false || strpos($c, 'wellness') !== false) {
-            $cat = 'Anxiety & Wellness';
-        } elseif (strpos($c, 'family') !== false || strpos($c, 'home') !== false) {
-            $cat = 'Family Concerns';
-        } elseif (strpos($c, 'peer') !== false || strpos($c, 'friend') !== false || strpos($c, 'relationship') !== false) {
-            $cat = 'Peer Relationships';
-        } elseif (strpos($c, 'career') !== false || strpos($c, 'strand') !== false) {
-            $cat = 'Career & Strand Guidance';
         }
         
         $concerns[$cat]++;
@@ -431,8 +439,12 @@ function getAdminAnalyticsData($year_filter = 'all', $counselor_filter = null) {
     // Top concern overall
     $top_concern = 'Academic Stress';
     if (!empty($concerns)) {
-        arsort($concerns);
-        $top_concern = key($concerns);
+        $copy_concerns = $concerns;
+        arsort($copy_concerns);
+        $top_concern = key($copy_concerns);
+    }
+    if ($concern_filter !== 'all' && !empty($concern_filter)) {
+        $top_concern = $concern_filter;
     }
     
     return [
