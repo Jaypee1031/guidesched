@@ -68,16 +68,9 @@ $base_url_path = '../';
         <div class="sub"><?php echo date('l, F j, Y'); ?> · Guidance Office, Cagasat High School</div>
       </div>
       <div class="topbar-right">
-        <a href="notifications.php" class="bell-btn">
+        <a href="notifications.php" class="bell-btn" title="Notifications">
           <?php if ($unread_count > 0): ?><span class="bell-dot"></span><?php endif; ?>
           <span class="icon"><svg width="18" height="18"><use href="#i-bell"/></svg></span>
-        </a>
-        <a href="profile.php" class="topbar-user-badge" title="Click to view My Profile">
-          <div class="avatar" style="background:var(--violet-700);"><?php echo $user_initials; ?></div>
-          <div class="user-meta">
-            <span class="user-name"><?php echo htmlspecialchars($user['name']); ?></span>
-            <span class="user-role"><?php echo htmlspecialchars($user['specialization'] ?? ucfirst($_SESSION['role'])); ?></span>
-          </div>
         </a>
       </div>
     </div>

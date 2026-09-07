@@ -55,13 +55,6 @@ $base_url_path = '../';
         <?php if ($unread_count > 0): ?>
           <a href="notifications.php?mark_all_read=1" class="btn btn-outline btn-sm">Mark all read</a>
         <?php endif; ?>
-        <a href="profile.php" class="topbar-user-badge" title="Click to view My Profile">
-          <div class="avatar"><?php echo $user_initials; ?></div>
-          <div class="user-meta">
-            <span class="user-name"><?php echo htmlspecialchars($user['name']); ?></span>
-            <span class="user-role"><?php echo htmlspecialchars($user['course'] ?? 'Student'); ?></span>
-          </div>
-        </a>
       </div>
     </div>
 
